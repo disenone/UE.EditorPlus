@@ -38,6 +38,10 @@ private:
 
 	// class record
 	TSharedRef<ITableRow> OnGenerateWidgetForClassRecordListView(TSharedPtr<FClassNameListItem> InItem, const TSharedRef<STableViewBase>& OwnerTable);
+
+	// detail font
+	void OnDetailFontSizeChange(uint8 Size, ETextCommit::Type CommitType);
+	TOptional<uint8> GetDetailFontSize() const;
 	
 private:
 	// class name view
@@ -65,8 +69,9 @@ private:
 	TSharedPtr<SCheckBox> ShowFunctionCheckBox;
 	
 	// detail
-	TSharedPtr<SVerticalBox> DetailPanel;
-	TSharedPtr<STextBlock>	DetailText;
+	TSharedPtr<SVerticalBox>	DetailPanel;
+	TSharedPtr<STextBlock>		DetailText;
+	uint8						DetailFontSize;
 
 	// class record
 	typedef SListView<TSharedPtr<FClassNameListItem>> SClassRecordListView;

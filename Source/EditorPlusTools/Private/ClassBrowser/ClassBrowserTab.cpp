@@ -1,6 +1,6 @@
 ﻿
 #include "ClassBrowserTab.h"
-
+#include "ClassBrowser.h"
 #include <regex>
 
 #include "Widgets/Views/STableRow.h"
@@ -17,6 +17,7 @@ enum class SClassBrowserTab::EClassRecordListAction
 
 void SClassBrowserTab::Construct(const FArguments& InArgs)
 {
+	DetailFontSize = 10;
 	ChildSlot
 	[
 		SNew(SHorizontalBox)
@@ -182,13 +183,37 @@ void SClassBrowserTab::Construct(const FArguments& InArgs)
 					[
 						SNew(SHorizontalBox)
 						+ SHorizontalBox::Slot()
-						.HAlign(HAlign_Right)
+						.HAlign(HAlign_Left)
 						.AutoWidth()
 						[
 							SAssignNew(ClassSourceCodeButton, SButton)
 							.VAlign(VAlign_Center)
 							.Text(FText::FromString(TEXT("Open Source Code")))
 							.OnClicked(SharedThis(this), &SClassBrowserTab::OnClickClassSourceCodeButton)
+						]
+						+ SHorizontalBox::Slot()
+						.HAlign(HAlign_Left)
+						.AutoWidth()
+						[
+							SNew(SNumericEntryBox<uint8>)
+							.Value(this, &SClassBrowserTab::GetDetailFontSize)
+							.Delta(1)
+							.AllowSpin(true)
+							.LinearDeltaSensitivity(50)
+							.ShiftMouseMovePixelPerDelta(50)
+							.MinValue(6)
+							.MaxValue(30)
+							.OnValueChanged_Lambda([this](uint8 Size)
+							{
+								DetailFontSize = Size;
+							})
+							.OnValueCommitted(SharedThis(this), &SClassBrowserTab::OnDetailFontSizeChange)
+							.Label()
+							[
+								SNew(STextBlock)
+								.Text(FText::FromString(TEXT("Font Size")))
+							]
+							.LabelVAlign(VAlign_Center)
 						]
 					]
 					+ SVerticalBox::Slot()
@@ -206,6 +231,7 @@ void SClassBrowserTab::Construct(const FArguments& InArgs)
 								+ SScrollBox::Slot()
 								[
 									SAssignNew(DetailText, STextBlock)
+									.Font(FCoreStyle::GetDefaultFontStyle("Regular", DetailFontSize))
 								]
 							]	
 						]
@@ -639,3 +665,17 @@ TSharedRef<ITableRow> SClassBrowserTab::OnGenerateWidgetForClassRecordListView(T
 
 	return SNew(SClassNameItemWidget, OwnerTable, InItem, SharedThis(this));	
 }
+
+
+void SClassBrowserTab::OnDetailFontSizeChange(uint8 Size, ETextCommit::Type CommitType)
+{
+	UE_LOG(LogClassBrowser, Display, TEXT("OnDetailFontSizeChange [%d]"), Size);
+	DetailText->SetFont(FCoreStyle::GetDefaultFontStyle("Regular", Size));
+	DetailFontSize = Size;
+}
+
+TOptional<uint8> SClassBrowserTab::GetDetailFontSize() const
+{
+	return DetailFontSize;
+}
+
