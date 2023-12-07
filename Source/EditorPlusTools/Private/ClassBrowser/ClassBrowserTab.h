@@ -1,0 +1,75 @@
+﻿#pragma once
+
+#include "Slate.h"
+#include "ClassItem.h"
+
+class SClassBrowserTab final : public SCompoundWidget
+{
+	SLATE_BEGIN_ARGS(SClassBrowserTab)
+	{}
+	SLATE_END_ARGS()
+
+	void Construct(const FArguments& InArgs);
+
+private:
+	// class name view
+	using FClassNameListItem = ClassBrowser_Detail::FClassItemBase;
+	using FClassNameList = TArray<TSharedPtr<FClassNameListItem>>;
+	enum class EClassRecordListAction;
+	TSharedRef<ITableRow> OnGenerateWidgetForClassNameListView(TSharedPtr<FClassNameListItem> InItem, const TSharedRef<STableViewBase>& OwnerTable);
+	void UpdateClassNameList();
+	void UpdateClassNameListItems();
+	void OnModuleChanged(FName ModuleThatChanged, EModuleChangeReason ReasonForChange);
+	void OnClickClassName(TSharedRef<FClassNameListItem> ItemRef, EClassRecordListAction Action);
+	void OnClassNameFilterChanged(const FText& InFilterText);
+	template <class Type, class NameType> FClassNameList GetClasses();
+
+	// class info view
+	using FClassInfoListItem = ClassBrowser_Detail::FClassItemBase;
+	TSharedRef<ITableRow> OnGenerateWidgetForClassInfoListView(TSharedPtr<FClassInfoListItem> InItem, const TSharedRef<STableViewBase>& OwnerTable);
+	void UpdateClassInfoList();
+	void UpdateClassInfoListItems();
+	void OnClickClassInfoItem(TSharedRef<FClassInfoListItem> ItemRef) const;
+	FReply OnClickClassInfoButton() const;
+	void OnClassInfoFilterChanged(const FText& InFilterText);
+	void UpdateCurrentClass();
+	FReply OnClickClassSourceCodeButton() const;
+	void OnClickClassInfoCheckBox(ECheckBoxState CheckState);
+
+	// class record
+	TSharedRef<ITableRow> OnGenerateWidgetForClassRecordListView(TSharedPtr<FClassNameListItem> InItem, const TSharedRef<STableViewBase>& OwnerTable);
+	
+private:
+	// class name view
+	TSharedPtr<SSearchBox>	ClassNameSearchBox;
+	TSharedPtr<SBorder> ClassNamePanel;
+
+	typedef SListView<TSharedPtr<FClassNameListItem>> SClassNameListView;
+	TSharedPtr<SClassNameListView>	ClassNameListView;
+	FClassNameList ClassNameListCache;
+	FClassNameList ClassNameListItems;
+
+	// class info view
+	TSharedPtr<FClassNameListItem> CurrentClassItem;
+	TSharedPtr<SButton>	ClassSourceCodeButton;
+	TSharedPtr<SSearchBox>	ClassInfoSearchBox;
+	TSharedPtr<SBorder> ClassInfoPanel;
+	
+	typedef SListView<TSharedPtr<FClassInfoListItem>> SClassInfoListView;
+	TSharedPtr<SClassInfoListView> ClassInfoListView;
+	TArray<TSharedPtr<FClassInfoListItem>> ClassInfoListCache;
+	TArray<TSharedPtr<FClassInfoListItem>> ClassInfoListItems;
+
+	TSharedPtr<SCheckBox> ShowSuperCheckBox;
+	TSharedPtr<SCheckBox> ShowPropertyCheckBox;
+	TSharedPtr<SCheckBox> ShowFunctionCheckBox;
+	
+	// detail
+	TSharedPtr<SVerticalBox> DetailPanel;
+	TSharedPtr<STextBlock>	DetailText;
+
+	// class record
+	typedef SListView<TSharedPtr<FClassNameListItem>> SClassRecordListView;
+	TSharedPtr<SClassRecordListView> ClassRecordListView;
+	FClassNameList ClassRecordListItems;
+};
