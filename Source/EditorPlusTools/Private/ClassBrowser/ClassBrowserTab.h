@@ -20,7 +20,7 @@ private:
 	void UpdateClassNameList();
 	void UpdateClassNameListItems();
 	void OnModuleChanged(FName ModuleThatChanged, EModuleChangeReason ReasonForChange);
-	void OnClickClassName(TSharedRef<FClassNameListItem> ItemRef, EClassRecordListAction Action);
+	void OnClickClassName(const TSharedRef<FClassNameListItem>& ItemRef, const EClassRecordListAction Action);
 	void OnClassNameFilterChanged(const FText& InFilterText);
 	template <class Type, class NameType> FClassNameList GetClasses();
 
@@ -29,7 +29,7 @@ private:
 	TSharedRef<ITableRow> OnGenerateWidgetForClassInfoListView(TSharedPtr<FClassInfoListItem> InItem, const TSharedRef<STableViewBase>& OwnerTable);
 	void UpdateClassInfoList();
 	void UpdateClassInfoListItems();
-	void OnClickClassInfoItem(TSharedRef<FClassInfoListItem> ItemRef) const;
+	void OnClickClassInfoItem(const TSharedRef<FClassInfoListItem>& ItemRef) const;
 	FReply OnClickClassInfoButton() const;
 	void OnClassInfoFilterChanged(const FText& InFilterText);
 	void UpdateCurrentClass();

@@ -284,7 +284,8 @@ TSharedRef<ITableRow> SClassBrowserTab::OnGenerateWidgetForClassNameListView(TSh
 		SLATE_END_ARGS()
 		using FSuperRowType = STableRow<TSharedPtr<FClassNameListItem>>;
 		
-		void Construct( const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable, TSharedPtr<FClassNameListItem> InListItem, TSharedRef<SClassBrowserTab> TabRef)
+		void Construct( const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable,
+			const TSharedPtr<FClassNameListItem>& InListItem, TSharedRef<SClassBrowserTab> TabRef)
 		{
 			Item = InListItem;
 			FSuperRowType::Construct(
@@ -317,7 +318,7 @@ TSharedRef<ITableRow> SClassBrowserTab::OnGenerateWidgetForClassNameListView(TSh
 				, InOwnerTable);
 		}
 
-		FString GenerateText(TSharedRef<SClassBrowserTab> TabRef, const FString& InText)
+		static FString GenerateText(const TSharedRef<SClassBrowserTab>& TabRef, const FString& InText)
 		{
 			const FString FilterStr = TabRef->ClassNameSearchBox->GetText().ToString();
 			if(FilterStr.IsEmpty())
@@ -361,23 +362,52 @@ void SClassBrowserTab::UpdateClassNameListItems()
 	}
 
 	const FString FilterStr = ClassNameSearchBox->GetText().ToString();
-	std::wregex Pattern;
 	
 	if (!FilterStr.IsEmpty())
 	{
 		const FString PatternStr = TEXT(".*?") + FString::Join(FilterStr, TEXT(".*?")) + TEXT(".*?");
-		Pattern	= std::wregex(ToCStr(PatternStr), std::regex::icase);
+		const std::wregex Pattern	= std::wregex(ToCStr(PatternStr), std::regex::icase);
+		using FMatchItemType = TTuple<uint16, uint16, TSharedPtr<FClassNameListItem>>; 
+		TArray<FMatchItemType> MatchItems;
+	
+		for (TSharedPtr<FClassNameListItem> Item: ClassNameListCache)
+		{
+			std::wcmatch MatchResult;
+			if (!std::regex_match(ToCStr(Item->GetName()), MatchResult, Pattern)) continue;
+
+			if (MatchResult.empty() || !MatchResult.ready()) continue;
+
+			MatchItems.Push(MakeTuple<uint16, uint16, TSharedPtr<FClassNameListItem>>(
+				MatchResult.length(0) + MatchResult.prefix().length(), MatchResult.prefix().length(), Item.ToSharedRef()));
+		}
+
+		if (!MatchItems.IsEmpty())
+		{
+			MatchItems.Sort([](FMatchItemType a, FMatchItemType b)
+			{
+				if (a.Get<0>() != b.Get<0>())
+				{
+					return a.Get<0>() < b.Get<0>();
+				}
+
+				if (a.Get<0>() != b.Get<0>())
+				{
+					return a.Get<0>() < b.Get<0>();
+				}
+				return a.Get<2>()->GetName() < b.Get<2>()->GetName();
+			});
+			for (FMatchItemType& MatchItem: MatchItems)
+			{
+				ClassNameListItems.Push(MatchItem.Get<2>());	
+			}
+		}
+	}
+	else
+	{
+		ClassNameListItems.Empty();
+		ClassNameListItems.Append(ClassNameListCache);
 	}
 	
-	for (TSharedPtr<FClassNameListItem> Item: ClassNameListCache)
-	{
-		if (!FilterStr.IsEmpty())
-		{
-			if (!std::regex_match(ToCStr(Item->GetName()), Pattern)) continue;
-		}
-		ClassNameListItems.Push(Item);
-	}
-
 	if (ClassNameListView.IsValid())
 	{
 		ClassNameListView->RebuildList();
@@ -412,13 +442,14 @@ void SClassBrowserTab::UpdateClassNameList()
 	ClassNameListCache.Append(GetClasses<UScriptStruct, FClassItemScriptStruct>());
 
 	ClassNameListCache.Sort(
-		[](TSharedPtr<FClassNameListItem> a, TSharedPtr<FClassNameListItem> b) -> bool
-		{return a->GetName() < b->GetName();});
+		[](const TSharedPtr<FClassNameListItem>& One, const TSharedPtr<FClassNameListItem>& Another) -> bool
+		{return One->GetName() < Another->GetName();});
 }
 
-void SClassBrowserTab::OnClickClassName(const TSharedRef<FClassNameListItem> ItemRef, EClassRecordListAction Action) 
+void SClassBrowserTab::OnClickClassName(const TSharedRef<FClassNameListItem>& ItemRef, const EClassRecordListAction Action) 
 {
-	auto Predicate = [This=SharedThis(this)](const TSharedPtr<FClassNameListItem>& Item){ return Item->GetPathName() == This->CurrentClassItem->GetPathName(); };
+	auto Predicate = [This=SharedThis(this)](const TSharedPtr<FClassNameListItem>& Item)
+		{ return Item->GetPathName() == This->CurrentClassItem->GetPathName(); };
 	switch (Action)
 	{
 	case EClassRecordListAction::Add:
@@ -479,7 +510,8 @@ TSharedRef<ITableRow> SClassBrowserTab::OnGenerateWidgetForClassInfoListView(TSh
 		SLATE_END_ARGS()
 		using FSuperRowType = STableRow<TSharedPtr<FClassInfoListItem>>;
 		
-		void Construct( const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable, TSharedPtr<FClassInfoListItem> InListItem, TSharedRef<SClassBrowserTab> TabRef)
+		void Construct( const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable,
+			const TSharedPtr<FClassInfoListItem>& InListItem, TSharedRef<SClassBrowserTab> TabRef)
 		{
 			Item = InListItem;
 			FSuperRowType::Construct(
@@ -556,15 +588,6 @@ void SClassBrowserTab::UpdateClassInfoListItems()
 		UpdateClassInfoList();
 	}
 
-	const FString FilterStr = ClassInfoSearchBox->GetText().ToString();
-	std::wregex Pattern;
-	
-	if (!FilterStr.IsEmpty())
-	{
-		const FString PatternStr = TEXT(".*?") + FString::Join(FilterStr, TEXT(".*?")) + TEXT(".*?");
-		Pattern	= std::wregex(ToCStr(PatternStr), std::regex::icase);
-	}
-
 	const bool ShowSuper = ShowSuperCheckBox->IsChecked();
 	const bool ShowProperty = ShowPropertyCheckBox->IsChecked();
 	const bool ShowFunction = ShowFunctionCheckBox->IsChecked();
@@ -573,13 +596,50 @@ void SClassBrowserTab::UpdateClassInfoListItems()
 		if (!ShowSuper && Item->GetType() == CurrentClassItem->GetType()) continue;
 		if (!ShowProperty && Item->GetType() == EClassType::Property) continue;
 		if (!ShowFunction && Item->GetType() == EClassType::Function) continue;
-		if (!FilterStr.IsEmpty())
-		{
-			if (!std::regex_match(ToCStr(Item->GetName()), Pattern)) continue;
-		}
 		ClassInfoListItems.Push(Item);
 	}
+	
+	const FString FilterStr = ClassInfoSearchBox->GetText().ToString();
+	
+	if (!FilterStr.IsEmpty())
+	{
+		const FString PatternStr = TEXT(".*?") + FString::Join(FilterStr, TEXT(".*?")) + TEXT(".*?");
+		const std::wregex Pattern	= std::wregex(ToCStr(PatternStr), std::regex::icase);
+		using FMatchItemType = TTuple<uint16, uint16, TSharedPtr<FClassInfoListItem>>; 
+		TArray<FMatchItemType> MatchItems;
+		for (auto Item: ClassInfoListItems)
+		{
+			std::wcmatch MatchResult;
+			if (!std::regex_match(ToCStr(Item->GetName()), MatchResult, Pattern)) continue;
 
+			if (MatchResult.empty() || !MatchResult.ready()) continue;
+
+			MatchItems.Push(MakeTuple<uint16, uint16, TSharedPtr<FClassInfoListItem>>(
+				MatchResult.length(0) + MatchResult.prefix().length(), MatchResult.prefix().length(), Item.ToSharedRef()));
+		}
+		if (!MatchItems.IsEmpty())
+		{
+			MatchItems.Sort([](FMatchItemType a, FMatchItemType b)
+			{
+				if (a.Get<0>() != b.Get<0>())
+				{
+					return a.Get<0>() < b.Get<0>();
+				}
+
+				if (a.Get<0>() != b.Get<0>())
+				{
+					return a.Get<0>() < b.Get<0>();
+				}
+				return a.Get<2>()->GetName() < b.Get<2>()->GetName();
+			});
+			ClassInfoListItems.Empty();
+			for (FMatchItemType& MatchItem: MatchItems)
+			{
+				ClassNameListItems.Push(MatchItem.Get<2>());	
+			}
+		}
+	}
+	
 	if (ClassInfoListView.IsValid())
 	{
 		ClassInfoListView->RequestListRefresh();
@@ -593,7 +653,7 @@ void SClassBrowserTab::OnClassInfoFilterChanged(const FText& InFilterText)
 }
 
 
-void SClassBrowserTab::OnClickClassInfoItem(const TSharedRef<FClassInfoListItem> ItemRef) const
+void SClassBrowserTab::OnClickClassInfoItem(const TSharedRef<FClassInfoListItem>& ItemRef) const
 {
 	if (!CurrentClassItem.IsValid()) return;
 	DetailText->SetText(FText::FromString(ItemRef->GetDesc()));
@@ -629,7 +689,8 @@ TSharedRef<ITableRow> SClassBrowserTab::OnGenerateWidgetForClassRecordListView(T
 		SLATE_END_ARGS()
 		using FSuperRowType = STableRow<TSharedPtr<FClassNameListItem>>;
 		
-		void Construct( const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable, TSharedPtr<FClassNameListItem> InListItem, TSharedRef<SClassBrowserTab> TabRef)
+		void Construct( const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable,
+			const TSharedPtr<FClassNameListItem>& InListItem, TSharedRef<SClassBrowserTab> TabRef)
 		{
 			Item = InListItem;
 			TabWeakRef = TabRef;
@@ -669,7 +730,6 @@ TSharedRef<ITableRow> SClassBrowserTab::OnGenerateWidgetForClassRecordListView(T
 
 void SClassBrowserTab::OnDetailFontSizeChange(uint8 Size, ETextCommit::Type CommitType)
 {
-	UE_LOG(LogClassBrowser, Display, TEXT("OnDetailFontSizeChange [%d]"), Size);
 	DetailText->SetFont(FCoreStyle::GetDefaultFontStyle("Regular", Size));
 	DetailFontSize = Size;
 }
