@@ -11,7 +11,7 @@ void FClassBrowser::OnStartup()
 	}
 	// Tab->Register<SClassBrowserTab>();
 	// BuildTestMenu();
-	Tab->Register(FOnSpawnTab::CreateLambda([self=SharedThis(this)](const FSpawnTabArgs& TabSpawnArgs) -> TSharedRef<SDockTab>		
+	Tab->Register(FOnSpawnTab::CreateLambda([self=SharedThis(this)](const FSpawnTabArgs& TabSpawnArgs)
 	{
 		TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
 			.TabRole(ETabRole::NomadTab)

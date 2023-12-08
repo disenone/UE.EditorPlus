@@ -55,6 +55,7 @@ private:
 	TSharedPtr<SClassNameListView>	ClassNameListView;
 	FClassNameList ClassNameListCache;
 	FClassNameList ClassNameListItems;
+	TSharedPtr<FActiveTimerHandle> ClassNameSearchTimer;
 
 	// class info view
 	TSharedPtr<FClassNameListItem> CurrentClassItem;
@@ -66,6 +67,7 @@ private:
 	TSharedPtr<SClassInfoListView> ClassInfoListView;
 	TArray<TSharedPtr<FClassInfoListItem>> ClassInfoListCache;
 	TArray<TSharedPtr<FClassInfoListItem>> ClassInfoListItems;
+	TSharedPtr<FActiveTimerHandle> ClassInfoSearchTimer;
 
 	TSharedPtr<SCheckBox> ShowSuperCheckBox;
 	TSharedPtr<SCheckBox> ShowPropertyCheckBox;
@@ -80,4 +82,6 @@ private:
 	typedef SListView<TSharedPtr<FClassNameListItem>> SClassRecordListView;
 	TSharedPtr<SClassRecordListView> ClassRecordListView;
 	FClassNameList ClassRecordListItems;
+
+	const float SearchDelay = 0.1f;
 };

@@ -270,8 +270,20 @@ void SClassBrowserTab::OnModuleChanged(FName ModuleThatChanged, EModuleChangeRea
 
 void SClassBrowserTab::OnClassNameFilterChanged(const FText& InFilterText)
 {
-	UpdateClassNameListItems();
+	if (ClassNameSearchTimer.IsValid())
+	{
+		UnRegisterActiveTimer(ClassNameSearchTimer.ToSharedRef());
+	}
+	
+	ClassNameSearchTimer = RegisterActiveTimer(SearchDelay, FWidgetActiveTimerDelegate::CreateLambda(
+	[self = SharedThis(this)](double, double)
+	{
+		self->ClassNameSearchTimer.Reset();
+		self->UpdateClassNameListItems();
+		return EActiveTimerReturnType::Stop;
+	}));
 }
+
 
 TSharedRef<ITableRow> SClassBrowserTab::OnGenerateWidgetForClassNameListView(TSharedPtr<FClassNameListItem> InItem,
 	const TSharedRef<STableViewBase>& OwnerTable)
@@ -646,7 +658,18 @@ void SClassBrowserTab::UpdateClassInfoListItems()
 
 void SClassBrowserTab::OnClassInfoFilterChanged(const FText& InFilterText)
 {
-	UpdateClassInfoListItems();
+	if (ClassInfoSearchTimer.IsValid())
+	{
+		UnRegisterActiveTimer(ClassInfoSearchTimer.ToSharedRef());
+	}
+	
+	ClassInfoSearchTimer = RegisterActiveTimer(SearchDelay, FWidgetActiveTimerDelegate::CreateLambda(
+	[self = SharedThis(this)](double, double)
+	{
+		self->ClassInfoSearchTimer.Reset();
+		self->UpdateClassInfoListItems();
+		return EActiveTimerReturnType::Stop;
+	}));
 }
 
 
@@ -739,6 +762,7 @@ TOptional<uint8> SClassBrowserTab::GetDetailFontSize() const
 void SClassBrowserTab::OnClose()
 {
 	ClassNameListCache.Empty();
+	ClassInfoListCache.Empty();
 }
 
 
