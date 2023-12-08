@@ -27,7 +27,7 @@ public:
 		}
 	}
 	
-	virtual void Register(FOnSpawnTab SpawnTabDelegate);
+	virtual void Register(const FOnSpawnTab& SpawnTabDelegate);
 	virtual void Unregister();
 	virtual void TryInvokeTab();
 protected:

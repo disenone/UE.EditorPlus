@@ -9,9 +9,12 @@ class SClassBrowserTab final : public SCompoundWidget
 	{}
 	SLATE_END_ARGS()
 
+public:
 	void Construct(const FArguments& InArgs);
-
+	void OnClose();
+	
 private:
+	
 	// class name view
 	using FClassNameListItem = ClassBrowser_Detail::FClassItemBase;
 	using FClassNameList = TArray<TSharedPtr<FClassNameListItem>>;
@@ -71,7 +74,7 @@ private:
 	// detail
 	TSharedPtr<SVerticalBox>	DetailPanel;
 	TSharedPtr<STextBlock>		DetailText;
-	uint8						DetailFontSize;
+	uint8						DetailFontSize=10;
 
 	// class record
 	typedef SListView<TSharedPtr<FClassNameListItem>> SClassRecordListView;

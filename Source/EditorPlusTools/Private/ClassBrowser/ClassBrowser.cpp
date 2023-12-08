@@ -9,8 +9,24 @@ void FClassBrowser::OnStartup()
 	{
 		Tab = MakeShared<FEditorPlusTab>("ClassBrowser");
 	}
-	Tab->Register<SClassBrowserTab>();
+	// Tab->Register<SClassBrowserTab>();
 	// BuildTestMenu();
+	Tab->Register(FOnSpawnTab::CreateLambda([self=SharedThis(this)](const FSpawnTabArgs& TabSpawnArgs) -> TSharedRef<SDockTab>		
+	{
+		TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
+			.TabRole(ETabRole::NomadTab)
+			.OnTabClosed(SDockTab::FOnTabClosedCallback::CreateLambda([self](TSharedRef<SDockTab>)
+			{
+				if (self->ClassBrowserTab.IsValid())
+				{
+					self->ClassBrowserTab->OnClose();
+				}
+			}))
+			[
+				SAssignNew(self->ClassBrowserTab, SClassBrowserTab)
+			];
+		return SpawnedTab;
+	}));
 }
 
 void FClassBrowser::OnShutdown()

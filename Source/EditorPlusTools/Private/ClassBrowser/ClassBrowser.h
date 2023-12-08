@@ -4,6 +4,8 @@
 #include "EditorPlusMenu.h"
 #include "EditorPlusTab.h"
 
+class SClassBrowserTab;
+
 class FClassBrowser: public IEditorPlusToolInterface
 {
 public:
@@ -19,6 +21,7 @@ private:
 	TSharedPtr<FEditorPlusTab> Tab;
 	TSharedPtr<FEditorPlusMenuBase> Menu;
 	TSharedPtr<FEditorPlusMenuBase> TestMenu;
+	TSharedPtr<SClassBrowserTab> ClassBrowserTab;
 };
 
 DECLARE_LOG_CATEGORY_EXTERN(LogClassBrowser, Display, All);

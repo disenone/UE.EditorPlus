@@ -617,26 +617,23 @@ void SClassBrowserTab::UpdateClassInfoListItems()
 			MatchItems.Push(MakeTuple<uint16, uint16, TSharedPtr<FClassInfoListItem>>(
 				MatchResult.length(0) + MatchResult.prefix().length(), MatchResult.prefix().length(), Item.ToSharedRef()));
 		}
-		if (!MatchItems.IsEmpty())
+		MatchItems.Sort([](FMatchItemType One, FMatchItemType Another)
 		{
-			MatchItems.Sort([](FMatchItemType a, FMatchItemType b)
+			if (One.Get<0>() != Another.Get<0>())
 			{
-				if (a.Get<0>() != b.Get<0>())
-				{
-					return a.Get<0>() < b.Get<0>();
-				}
-
-				if (a.Get<0>() != b.Get<0>())
-				{
-					return a.Get<0>() < b.Get<0>();
-				}
-				return a.Get<2>()->GetName() < b.Get<2>()->GetName();
-			});
-			ClassInfoListItems.Empty();
-			for (FMatchItemType& MatchItem: MatchItems)
-			{
-				ClassNameListItems.Push(MatchItem.Get<2>());	
+				return One.Get<0>() < Another.Get<0>();
 			}
+
+			if (One.Get<0>() != Another.Get<0>())
+			{
+				return One.Get<0>() < Another.Get<0>();
+			}
+			return One.Get<2>()->GetName() < Another.Get<2>()->GetName();
+		});
+		ClassInfoListItems.Empty();
+		for (FMatchItemType& MatchItem: MatchItems)
+		{
+			ClassInfoListItems.Push(MatchItem.Get<2>());	
 		}
 	}
 	
@@ -738,4 +735,10 @@ TOptional<uint8> SClassBrowserTab::GetDetailFontSize() const
 {
 	return DetailFontSize;
 }
+
+void SClassBrowserTab::OnClose()
+{
+	ClassNameListCache.Empty();
+}
+
 

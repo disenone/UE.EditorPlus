@@ -5,7 +5,7 @@ void FEditorPlusTab::Unregister()
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(TabId);
 }
 
-void FEditorPlusTab::Register(FOnSpawnTab SpawnTabDelegate)
+void FEditorPlusTab::Register(const FOnSpawnTab& SpawnTabDelegate)
 {
 	FTabSpawnerEntry& Entry = FGlobalTabmanager::Get()->RegisterNomadTabSpawner(TabId, SpawnTabDelegate)
 		.SetDisplayName(FText::FromName(TabId))
