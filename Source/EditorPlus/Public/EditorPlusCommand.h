@@ -8,12 +8,13 @@ public:
 		const FExecuteAction& ExecuteAction,
 		const FName& FriendlyName = NAME_None,
 		const FName& Desc = NAME_None,
+		const FName& Hook = NAME_None,
 		const EUserInterfaceActionType& Type = EUserInterfaceActionType::Button,
 		const FInputChord& Chord = FInputChord(),
 		const FName& LoctextNamespace = NAME_None,
 		const FSlateIcon& Icon = FSlateIcon())
 		:	Name(Name), FriendlyName(FriendlyName == NAME_None ? Name: FriendlyName),
-			Desc(Desc), Type(Type), Chord(Chord),
+			Desc(Desc), Hook(Hook), Type(Type), Chord(Chord),
 			LoctextNamespace(LoctextNamespace), Icon(Icon), ExecuteAction(ExecuteAction) {}
 
 	void Register(FBindingContext* Context);
@@ -25,6 +26,7 @@ public:
 	const FName Name;
 	const FName FriendlyName;
 	const FName Desc;
+	const FName Hook;
 	const EUserInterfaceActionType Type;
 	const FInputChord Chord;
 	const FName LoctextNamespace;

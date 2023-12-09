@@ -175,7 +175,8 @@ protected:
 class EDITORPLUS_API FEditorPlusSubMenu: public TEditorPlusMenuBase<FEditorPlusSubMenu>
 {
 public:
-	explicit FEditorPlusSubMenu(const FName& Name, const FName& Tips=NAME_None): Name(Name), Tips(Tips) {}
+	explicit FEditorPlusSubMenu(const FName& Name, const FName& Tips=NAME_None, const FName& Hook=NAME_None)
+		: Name(Name), Tips(Tips), Hook(Hook) {}
 	virtual void Register(FMenuBuilder& MenuBuilder, const FName& ParentPath) override;
 	using TEditorPlusMenuBase<FEditorPlusSubMenu>::AddMenuExtension;
 	using TEditorPlusMenuBase<FEditorPlusSubMenu>::RemoveMenuExtension;
@@ -187,6 +188,7 @@ protected:
 	void MakeSubMenu(FMenuBuilder& MenuBuilder, const FName ParentPath);
 	const FName Name;
 	const FName Tips;
+	const FName Hook;
 };
 
 
@@ -194,11 +196,12 @@ class EDITORPLUS_API FEditorPlusMenu: public TEditorPlusMenuBaseNoSlots<FEditorP
 {
 public:
 	explicit FEditorPlusMenu(
-		TSharedRef<IEditorPlusCommandsInterface> Commands,
+		const TSharedRef<IEditorPlusCommandsInterface>& Commands,
 		const FName& UniqueName,
 		const FName& FriendlyName,
 		const FName& Desc,
 		const FExecuteAction& ExecuteAction,
+		const FName& Hook = NAME_None,
 		const EUserInterfaceActionType& Type = EUserInterfaceActionType::Button,
 		const FInputChord& Chord = FInputChord(),
 		const FName& LoctextNamespace = NAME_None,
@@ -208,6 +211,7 @@ public:
 		const FName& Name,
 		const FName& Desc,
 		const FExecuteAction& ExecuteAction,
+		const FName& Hook = NAME_None,
 		const EUserInterfaceActionType& Type = EUserInterfaceActionType::Button,
 		const FSlateIcon& InIcon = FSlateIcon());
 	
@@ -292,7 +296,7 @@ protected:
 class EDITORPLUS_API FEditorPlusPathMenu: public TSharedFromThis<FEditorPlusPathMenu>
 {
 public:
-	explicit FEditorPlusPathMenu(const FName& Path, const FExecuteAction& ExecuteAction, const bool bMergeMenu=false);
+	explicit FEditorPlusPathMenu(const FName& Path, const FExecuteAction& ExecuteAction, const bool bMergeMenu=true);
 	~FEditorPlusPathMenu();
 
 protected:

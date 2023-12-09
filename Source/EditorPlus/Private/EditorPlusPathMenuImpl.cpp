@@ -13,8 +13,9 @@ void FEditorPlusPathMenuBar::Register(FMenuBarBuilder& MenuBarBuilder)
 {
 	MenuBarBuilder.AddPullDownMenu(
 	FText::FromName(Name),
-	FText(),
-	FEditorPlusMenuManager::GetDelegate<FPathMenuExtensionDelegate>(Name));	
+	FText::FromName(Name),
+	FEditorPlusMenuManager::GetDelegate<FPathMenuExtensionDelegate>(Name),
+	Name);	
 }
 
 void FEditorPlusPathMenuBar::Unregister()
@@ -105,7 +106,11 @@ void FEditorPlusPathSubMenu::Register(FMenuBuilder& MenuBuilder, const FName& Pa
 	MenuBuilder.AddSubMenu(
 		FText::FromName(Name),
 		FText(),
-		FNewMenuDelegate::CreateSP(this, &FEditorPlusPathSubMenu::MakeSubMenu)
+		FNewMenuDelegate::CreateSP(this, &FEditorPlusPathSubMenu::MakeSubMenu),
+		false,
+		FSlateIcon(),
+		true,
+		Name
 	);
 }
 
@@ -114,7 +119,11 @@ void FEditorPlusPathSubMenu::RegisterWithMerge(FMenuBuilder& MenuBuilder, const 
 	MenuBuilder.AddSubMenu(
 		FText::FromName(Name),
 		FText(),
-		FNewMenuDelegate::CreateSP(this, &FEditorPlusPathSubMenu::MakeSubMenu, bMerge)
+		FNewMenuDelegate::CreateSP(this, &FEditorPlusPathSubMenu::MakeSubMenu, bMerge),
+		false,
+		FSlateIcon(),
+		true,
+		Name
 	);	
 }
 
@@ -150,8 +159,12 @@ FEditorPlusPathCommand::~FEditorPlusPathCommand()
 void FEditorPlusPathCommand::Register(FMenuBuilder& MenuBuilder, const FName& ParentPath)
 {
 	MenuBuilder.AddMenuEntry(
-		FText::FromName(CommandInfo->Name), FText::FromName(CommandInfo->Desc), CommandInfo->Icon,
-		CommandInfo->ExecuteAction, NAME_None, CommandInfo->Type);
+		FText::FromName(CommandInfo->Name),
+		FText::FromName(CommandInfo->Desc),
+		CommandInfo->Icon,
+		CommandInfo->ExecuteAction,
+		CommandInfo->Name,
+		CommandInfo->Type);
 }
 
 void FEditorPlusPathCommand::Unregister()

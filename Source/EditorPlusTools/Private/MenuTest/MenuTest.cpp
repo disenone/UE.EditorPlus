@@ -38,33 +38,36 @@ void FMenuTest::BuildMenu()
 	}
 
 	Menu->AddChildren({
-	NEW_ED_MENU(FEditorPlusSection)("Section 1")
+	NEW_ED_MENU(FEditorPlusSection)("Section 1", "Section 1")
 	->Content({
 		NEW_ED_MENU(FEditorPlusMenu)(
 			"Command1",
 			"Command1 tips",
 			FExecuteAction::CreateLambda([]
-			{
-				UE_LOG(LogMenuTest, Display, TEXT("clicked Command1"));
-			})),
+				{
+					UE_LOG(LogMenuTest, Display, TEXT("clicked Command1"));
+				}),
+			"Command1"),
 		NEW_ED_MENU(FEditorPlusMenu)(
 			"Command2",
 			"Command2 tips",
 			FExecuteAction::CreateLambda([]
-			{
-				UE_LOG(LogMenuTest, Display, TEXT("clicked Command2"));
-			})),
+				{
+					UE_LOG(LogMenuTest, Display, TEXT("clicked Command2"));
+				}),
+			"Command2"),
 	}),
-	NEW_ED_MENU(FEditorPlusSeparator)(),
-	NEW_ED_MENU(FEditorPlusSubMenu)("Sub Menu 1")
+	NEW_ED_MENU(FEditorPlusSeparator)("Separator1"),
+	NEW_ED_MENU(FEditorPlusSubMenu)("Sub Menu 1", "Open the Sub Menu 1", "Sub Menu 1")
 	->Content({
 		NEW_ED_MENU(FEditorPlusMenu)(
 			"Command3",
 			"Command3 tips",
 			FExecuteAction::CreateLambda([]
-			{
-				UE_LOG(LogMenuTest, Display, TEXT("clicked Command3"));
-			})),
+				{
+					UE_LOG(LogMenuTest, Display, TEXT("clicked Command3"));
+				}),
+			"Command3"),
 		NEW_ED_MENU(FEditorPlusMenu)(
 			"Command4",
 			"Command4 tips",
@@ -164,7 +167,11 @@ void FMenuTest::BuildPathMenu()
 		PathMenus.Add(MakeShared<FEditorPlusPathMenu>("/MenuTest/Sub Menu 1/Sub Menu 1/a", FExecuteAction::CreateLambda([]
 		{
 			UE_LOG(LogMenuTest, Display, TEXT("/MenuTest/Sub Menu 1/Sub Menu 1/a"));
-		})));
+		}), false));
+		PathMenus.Add(MakeShared<FEditorPlusPathMenu>("/MenuTest/Sub Menu 1/Sub Menu 1/b", FExecuteAction::CreateLambda([]
+		{
+			UE_LOG(LogMenuTest, Display, TEXT("/MenuTest/Sub Menu 1/Sub Menu 1/b"));
+		}), false));	
 
 		PathMenus.Add(MakeShared<FEditorPlusPathMenu>("/MenuTest/Sub Menu 1/Sub Menu 1/a", FExecuteAction::CreateLambda([]
 		{
@@ -175,9 +182,6 @@ void FMenuTest::BuildPathMenu()
 		{
 			UE_LOG(LogMenuTest, Display, TEXT("/MenuTest/Sub Menu 1/Sub Menu 1/b"));
 		}), true));
-		PathMenus.Add(MakeShared<FEditorPlusPathMenu>("/MenuTest/Sub Menu 1/Sub Menu 1/b", FExecuteAction::CreateLambda([]
-		{
-			UE_LOG(LogMenuTest, Display, TEXT("/MenuTest/Sub Menu 1/Sub Menu 1/b"));
-		})));	
+
 	}
 }

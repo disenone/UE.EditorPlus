@@ -180,7 +180,11 @@ void FEditorPlusSubMenu::Register(FMenuBuilder& MenuBuilder, const FName& Parent
 	MenuBuilder.AddSubMenu(
 		FText::FromName(Name),
 		FText::FromName(Tips),
-		FNewMenuDelegate::CreateSP(this, &FEditorPlusSubMenu::MakeSubMenu, ParentPath)
+		FNewMenuDelegate::CreateSP(this, &FEditorPlusSubMenu::MakeSubMenu, ParentPath),
+		false,
+		FSlateIcon(),
+		true,
+		Hook
 	);
 }
 
@@ -199,22 +203,22 @@ void FEditorPlusSubMenu::MakeSubMenu(FMenuBuilder& MenuBuilder, const FName Pare
 
 
 FEditorPlusMenu::FEditorPlusMenu(
-	TSharedRef<IEditorPlusCommandsInterface> Commands, const FName& UniqueName, const FName& FriendlyName,
-	const FName& Desc, const FExecuteAction& ExecuteAction, const EUserInterfaceActionType& Type,
+	const TSharedRef<IEditorPlusCommandsInterface>& Commands, const FName& UniqueName, const FName& FriendlyName,
+	const FName& Desc, const FExecuteAction& ExecuteAction, const FName& Hook, const EUserInterfaceActionType& Type,
 	const FInputChord& Chord, const FName& LoctextNamespace, const FSlateIcon& Icon)
 {
 	CommandMgr = Commands;
 	CommandInfo = MakeShared<FEditorPlusCommandInfo>(
-		UniqueName, ExecuteAction, FriendlyName, Desc, Type, Chord, LoctextNamespace, Icon);
+		UniqueName, ExecuteAction, FriendlyName, Desc, Hook, Type, Chord, LoctextNamespace, Icon);
 }
 
 
 FEditorPlusMenu::FEditorPlusMenu(
-	const FName& Name, const FName& Desc, const FExecuteAction& ExecuteAction,
+	const FName& Name, const FName& Desc, const FExecuteAction& ExecuteAction, const FName& Hook,
 	const EUserInterfaceActionType& Type, const FSlateIcon& InIcon)
 {
 	CommandInfo = MakeShared<FEditorPlusCommandInfo>(
-		Name, ExecuteAction, Name, Desc, Type,
+		Name, ExecuteAction, Name, Desc, Hook, Type,
 		FInputChord(), NAME_None, InIcon);
 }
 
@@ -230,14 +234,14 @@ void FEditorPlusMenu::Register(FMenuBuilder& MenuBuilder, const FName& ParentPat
 	{
 		CommandMgr->AddCommand(CommandInfo.ToSharedRef());
 		MenuBuilder.PushCommandList(CommandMgr->GetCommandList());
-    	MenuBuilder.AddMenuEntry(CommandInfo->Info);
+    	MenuBuilder.AddMenuEntry(CommandInfo->Info, CommandInfo->Hook);
     	MenuBuilder.PopCommandList();	
 	}
 	else
 	{
 		MenuBuilder.AddMenuEntry(
 			FText::FromName(CommandInfo->Name), FText::FromName(CommandInfo->Desc), CommandInfo->Icon,
-			CommandInfo->ExecuteAction, NAME_None, CommandInfo->Type);
+			CommandInfo->ExecuteAction, CommandInfo->Hook, CommandInfo->Type);
 	}
 }
 

@@ -55,7 +55,7 @@ protected:
 class FEditorPlusPathMenuBar: public TEditorPlusMenuBase<FEditorPlusPathMenuBar>
 {
 public:
-	explicit FEditorPlusPathMenuBar(const FName& Name): Name(Name) {}
+	explicit FEditorPlusPathMenuBar(const FName& Name): Name(Name){}
 	
 	virtual ~FEditorPlusPathMenuBar() override;
 	

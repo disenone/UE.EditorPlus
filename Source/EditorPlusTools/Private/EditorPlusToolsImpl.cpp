@@ -4,6 +4,7 @@
 
 #include "MenuTest/MenuTest.h"
 #include "ClassBrowser/ClassBrowser.h"
+#include "MenuCollection/MenuCollection.h"
 
 
 TWeakPtr<FEditorPlusToolsImpl> FEditorPlusToolsImpl::Instance = nullptr;
@@ -33,7 +34,8 @@ void FEditorPlusToolsImpl::AddTools()
 #ifdef EP_ENABLE_CLASS_BROWSER
 		Tools.Emplace(MakeShared<FClassBrowser>());
 #endif
-		
+
+		Tools.Emplace(MakeShared<FMenuCollection>());
 	}
 
 }
