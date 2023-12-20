@@ -1,42 +1,34 @@
 ﻿
 #include "EditorPlusMenu.h"
 #include "LevelEditor.h"
-#include "EditorPlusCommand.h"
 #include "EditorPlusMenuManager.h"
 #include "EditorPlus.h"
 #include "EditorPlusUtils.h"
 
+// ---------------------------------------------------------------------
+// region FEditorPlusMenuBase
+//
 
 FEditorPlusMenuBase::~FEditorPlusMenuBase()
 {
 	FEditorPlusMenuBase::Unregister();
-	FEditorPlusMenuBase::RemoveMenuExtension();
+	FEditorPlusMenuBase::RemoveMenuExtension();	
 }
 
-TArray<TSharedRef<FEditorPlusMenuBase>> FEditorPlusMenuBase::GetChildrenByName(const FName& Name, const FName& TypeName)
+
+void FEditorPlusMenuBase::Destroy()
 {
-	TArray<TSharedRef<FEditorPlusMenuBase>> Ret;
-	for (auto Menu: Children)
-	{
-		if (Menu->GetName() == Name && Menu->IsType(TypeName))
-		{
-			Ret.Push(Menu);
-		}
-	}
-	return Ret;
+	Unregister();
+	RemoveMenuExtension();	
 }
 
-TArray<TSharedRef<FEditorPlusMenuBase>> FEditorPlusMenuBase::GetChildrenByType(const FName& TypeName)
+
+void FEditorPlusMenuBase::Register(FMenuBuilder& MenuBuilder)
 {
-	TArray<TSharedRef<FEditorPlusMenuBase>> Ret;
 	for (auto Menu: Children)
 	{
-		if (Menu->IsType(TypeName))
-		{
-			Ret.Push(Menu);
-		}
+		Menu->Register(MenuBuilder);
 	}
-	return Ret;	
 }
 
 
@@ -52,34 +44,33 @@ void FEditorPlusMenuBase::Unregister()
 	}
 }
 
-void FEditorPlusMenuBase::Register(FMenuBuilder& MenuBuilder, const FName& ParentPath)
-{
-	for (auto Menu: Children)
-	{
-		Menu->Register(MenuBuilder, ParentPath);
-	}
-}
 
-
-void FEditorPlusMenuBase::DoAddMenuExtension(const FName& ExtensionHook, EExtensionHook::Position Position, const FName& UniId)
+void FEditorPlusMenuBase::DoAddMenuExtension(const FName& ExtensionHook, const EExtensionHook::Position Position)
 {
 	if (MenuExtender.IsValid())
 	{
 		RemoveMenuExtension();
 	}
-	SetUniqueId(UniId);
+	this->ExtHook = ExtensionHook;
+	
 	MenuExtender = MakeShared<FExtender>();
 	MenuExtender->AddMenuExtension(
 		ExtensionHook, Position,
 		nullptr,
-		FEditorPlusMenuManager::RegisterDelegate(UniqueId, FMenuExtensionDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuExtension)));
+		FEditorPlusMenuManager::RegisterDelegate(
+			UniqueId,
+			FMenuExtensionDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuExtension))
+	);
+	
 	FEditorPlusUtils::GetLevelEditorModule().GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 	ModuleChangedHandler = FModuleManager::Get().OnModulesChanged().AddSP(this, &FEditorPlusMenuBase::OnMenuModuleChanged);
+
+	FEditorPlusMenuManager::RegisterPath(ExtensionHook.ToString(), AsShared());
 }
 
 void FEditorPlusMenuBase::OnMenuExtension(FMenuBuilder& MenuBuilder)
 {
-	Register(MenuBuilder, NAME_None);
+	Register(MenuBuilder);
 }
 
 void FEditorPlusMenuBase::OnMenuModuleChanged(FName ModuleThatChanged, EModuleChangeReason ReasonForChange)
@@ -96,31 +87,41 @@ void FEditorPlusMenuBase::RemoveMenuExtension()
 	{
 		FEditorPlusMenuManager::RemoveDelegate<FMenuExtensionDelegate>(UniqueId);
 		FEditorPlusMenuManager::RemoveDelegate<FMenuBarExtensionDelegate>(UniqueId);
+		FEditorPlusMenuManager::UnregisterPath(ExtHook.ToString(), UniqueId);
 		FEditorPlusUtils::GetLevelEditorModule().GetMenuExtensibilityManager()->RemoveExtender(MenuExtender);
 		MenuExtender.Reset();
+		if (ModuleChangedHandler.IsValid())
+		{
+			FModuleManager::Get().OnModulesChanged().Remove(ModuleChangedHandler);
+			ModuleChangedHandler.Reset();
+		}
 	}	
 }
 
 
-void FEditorPlusMenuBase::DoAddMenuBarExtension(const FName& ExtensionHook, EExtensionHook::Position Position, const FName& UniId)
+void FEditorPlusMenuBase::DoAddMenuBarExtension(const FName& ExtensionHook, const EExtensionHook::Position Position)
 {
 	if(MenuExtender.IsValid())
 	{
 		RemoveMenuBarExtension();
 	}
-	SetUniqueId(UniId);
 	MenuExtender = MakeShared<FExtender>();
 	MenuExtender->AddMenuBarExtension(
 		ExtensionHook, Position,
 		nullptr,
-		FEditorPlusMenuManager::RegisterDelegate(UniqueId, FMenuBarExtensionDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuBarExtension)));
+		FEditorPlusMenuManager::RegisterDelegate(
+			UniqueId,
+			FMenuBarExtensionDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuBarExtension))
+	);
+	
 	FEditorPlusUtils::GetLevelEditorModule().GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 	
 	FEditorPlusMenuManager::RegisterDelegate(UniqueId, FNewMenuDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuExtension));
-	
-	ModuleChangedHandler = FModuleManager::Get().OnModulesChanged().AddSP(this, &FEditorPlusMenuBase::OnMenuBarModuleChanged);
-}
 
+	ModuleChangedHandler = FModuleManager::Get().OnModulesChanged().AddSP(this, &FEditorPlusMenuBase::OnMenuBarModuleChanged);
+	
+	FEditorPlusMenuManager::RegisterPath(ExtensionHook.ToString(), AsShared());
+}
 
 void FEditorPlusMenuBase::OnMenuBarExtension(FMenuBarBuilder& MenuBarBuilder)
 {
@@ -139,121 +140,48 @@ void FEditorPlusMenuBase::RemoveMenuBarExtension()
 		FEditorPlusUtils::GetLevelEditorModule().GetMenuExtensibilityManager()->RemoveExtender(MenuExtender);
 		FEditorPlusMenuManager::RemoveDelegate<FMenuExtensionDelegate>(UniqueId);
 		FEditorPlusMenuManager::RemoveDelegate<FMenuBarExtensionDelegate>(UniqueId);
+		FEditorPlusMenuManager::UnregisterPath(ExtHook.ToString(), UniqueId);
+		MenuExtender.Reset();
 		if (ModuleChangedHandler.IsValid())
 		{
 			FModuleManager::Get().OnModulesChanged().Remove(ModuleChangedHandler);
 			ModuleChangedHandler.Reset();
 		}
-		MenuExtender.Reset();
 	}	
 }
 
-bool FEditorPlusMenuBase::HasMergeMenu(const bool bMerge) const
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuBase::CreateByPathName(const FString& PathName)
 {
-	for(const auto& Child: Children)
-	{
-		if(Child->HasMergeMenu(bMerge))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-
-void FEditorPlusSection::Register(FMenuBuilder& MenuBuilder, const FName& ParentPath)
-{
-	MenuBuilder.BeginSection(Hook, FText::FromName(Name));
-	FEditorPlusMenuBase::Register(MenuBuilder, ParentPath);
-	MenuBuilder.EndSection();
-}
-
-
-void FEditorPlusSeparator::Register(FMenuBuilder& MenuBuilder, const FName& ParentPath)
-{
-	MenuBuilder.AddMenuSeparator(Hook);
-}
-
-
-void FEditorPlusSubMenu::Register(FMenuBuilder& MenuBuilder, const FName& ParentPath)
-{
-	MenuBuilder.AddSubMenu(
-		FText::FromName(Name),
-		FText::FromName(Tips),
-		FNewMenuDelegate::CreateSP(this, &FEditorPlusSubMenu::MakeSubMenu, ParentPath),
-		false,
-		FSlateIcon(),
-		true,
-		Hook
-	);
-}
-
-void FEditorPlusSubMenu::MakeSubMenu(FMenuBuilder& MenuBuilder, const FName ParentPath)
-{
-	const FName Path = FEditorPlusUtils::PathJoin(ParentPath, GetName());	
-	FEditorPlusMenuBase::Register(MenuBuilder, Path);
+	auto TypeAndName = FEditorPlusMenuBase::GetTypeAndNameByPathName(PathName);
+	const FName Name = FName(TypeAndName.Get<1>());
 	
-	TArray<FName> SubMenuNames;
-	for(const auto& Child: GetChildrenByType<FEditorPlusSubMenu>())
+	switch(TypeAndName.Get<0>())
 	{
-		SubMenuNames.Add(Child->GetName());
-	}
-	FEditorPlusMenuManager::ExecutePathMenu(Path, MenuBuilder, SubMenuNames, true);
-}
-
-
-FEditorPlusMenu::FEditorPlusMenu(
-	const TSharedRef<IEditorPlusCommandsInterface>& Commands, const FName& UniqueName, const FName& FriendlyName,
-	const FName& Desc, const FExecuteAction& ExecuteAction, const FName& Hook, const EUserInterfaceActionType& Type,
-	const FInputChord& Chord, const FName& LoctextNamespace, const FSlateIcon& Icon)
-{
-	CommandMgr = Commands;
-	CommandInfo = MakeShared<FEditorPlusCommandInfo>(
-		UniqueName, ExecuteAction, FriendlyName, Desc, Hook, Type, Chord, LoctextNamespace, Icon);
-}
-
-
-FEditorPlusMenu::FEditorPlusMenu(
-	const FName& Name, const FName& Desc, const FExecuteAction& ExecuteAction, const FName& Hook,
-	const EUserInterfaceActionType& Type, const FSlateIcon& InIcon)
-{
-	CommandInfo = MakeShared<FEditorPlusCommandInfo>(
-		Name, ExecuteAction, Name, Desc, Hook, Type,
-		FInputChord(), NAME_None, InIcon);
-}
-
-FEditorPlusMenu::~FEditorPlusMenu()
-{
-	FEditorPlusMenu::Unregister();
-}
-
-
-void FEditorPlusMenu::Register(FMenuBuilder& MenuBuilder, const FName& ParentPath)
-{
-	if (CommandMgr.IsValid())
-	{
-		CommandMgr->AddCommand(CommandInfo.ToSharedRef());
-		MenuBuilder.PushCommandList(CommandMgr->GetCommandList());
-    	MenuBuilder.AddMenuEntry(CommandInfo->Info, CommandInfo->Hook);
-    	MenuBuilder.PopCommandList();	
-	}
-	else
-	{
-		MenuBuilder.AddMenuEntry(
-			FText::FromName(CommandInfo->Name), FText::FromName(CommandInfo->Desc), CommandInfo->Icon,
-			CommandInfo->ExecuteAction, CommandInfo->Hook, CommandInfo->Type);
+		case EEditorPlusMenuType::Hook:
+			return MakeShared<FEditorPlusHook>(Name);
+		case EEditorPlusMenuType::MenuBar:
+			return MakeShared<FEditorPlusMenuBar>(Name, Name, Name);
+		case EEditorPlusMenuType::SubMenu:
+			return MakeShared<FEditorPlusSubMenu>(Name, Name, Name);
+		case EEditorPlusMenuType::Section:
+			return MakeShared<FEditorPlusSection>(Name, Name, Name);
+		case EEditorPlusMenuType::Separator:
+			return MakeShared<FEditorPlusSeparator>(Name);
+		case EEditorPlusMenuType::Command:
+			return MakeShared<FEditorPlusCommand>(Name, Name, Name);
+		default:
+			return nullptr;
 	}
 }
 
+//
+// endregion FEditorPlusMenuBase
+// ---------------------------------------------------------------------
 
-void FEditorPlusMenu::Unregister()
-{
-	if (CommandMgr.IsValid() && CommandInfo.IsValid())
-	{
-		CommandMgr->RemoveCommand(CommandInfo.ToSharedRef());
-	}
-}
 
+// ---------------------------------------------------------------------
+// region FEditorPlusMenuBar
+//
 
 FEditorPlusMenuBar::~FEditorPlusMenuBar()
 {
@@ -265,59 +193,144 @@ void FEditorPlusMenuBar::Register(FMenuBarBuilder& MenuBarBuilder)
 {
 	MenuBarBuilder.AddPullDownMenu(
 	FText::FromName(Name),
-	FText::FromName(Desc),
+	FText::FromName(Tips),
 	FEditorPlusMenuManager::GetDelegate<FNewMenuDelegate>(UniqueId),
 	Hook);
 }
 
-void FEditorPlusMenuBar::Unregister()
-{
-}
 
 void FEditorPlusMenuBar::OnMenuExtension(FMenuBuilder& MenuBuilder)
 {
-	FEditorPlusMenuBase::Register(MenuBuilder, GetName());
-	
-	// Other PathMenu
-	if (FEditorPlusMenuManager::ContainsDelegate<FPathMenuExtensionDelegate>(UniqueId))
-	{
-		TArray<FName> SubMenuNames;
-		for(const auto& Child: GetChildrenByType<FEditorPlusSubMenu>())
-		{
-			SubMenuNames.Add(Child->GetName());
-		}
+	FEditorPlusMenuBase::Register(MenuBuilder);
+}
 
-		FEditorPlusMenuManager::ExecutePathMenu(GetName(), MenuBuilder, SubMenuNames, true);
-		// FEditorPlusMenuManager::GetDelegate<FPathMenuExtensionDelegate>(UniqueId).ExecuteIfBound(MenuBuilder);
+//
+// endregion FEditorPlusMenuBar
+// ---------------------------------------------------------------------
+
+
+
+// ---------------------------------------------------------------------
+// region FEditorPlusMenuSection
+//
+
+void FEditorPlusSection::Register(FMenuBuilder& MenuBuilder)
+{
+	MenuBuilder.BeginSection(Hook, FText::FromName(Name));
+	FEditorPlusMenuBase::Register(MenuBuilder);
+	MenuBuilder.EndSection();
+}
+
+//
+// endregion FEditorPlusMenuSection
+// ---------------------------------------------------------------------
+
+// ---------------------------------------------------------------------
+// region FEditorPlusSeparator
+//
+
+void FEditorPlusSeparator::Register(FMenuBuilder& MenuBuilder)
+{
+	MenuBuilder.AddMenuSeparator(Hook);
+	FEditorPlusMenuBase::Register(MenuBuilder);
+}
+
+//
+// endregion FEditorPlusSeparator
+// ---------------------------------------------------------------------
+
+// ---------------------------------------------------------------------
+// region FEditorPlusSubMenu
+//
+
+void FEditorPlusSubMenu::Register(FMenuBuilder& MenuBuilder)
+{
+	MenuBuilder.AddSubMenu(
+		FText::FromName(Name),
+		FText::FromName(Tips),
+		FNewMenuDelegate::CreateSP(this, &FEditorPlusSubMenu::MakeSubMenu),
+		false,
+		FSlateIcon(),
+		true,
+		Hook
+	);
+}
+
+void FEditorPlusSubMenu::MakeSubMenu(FMenuBuilder& MenuBuilder)
+{
+	FEditorPlusMenuBase::Register(MenuBuilder);
+}
+
+//
+// endregion FEditorPlusSubMenu
+// ---------------------------------------------------------------------
+
+// ---------------------------------------------------------------------
+// region FEditorPlusCommand
+//
+
+TSharedRef<FEditorPlusMenuBase> FEditorPlusCommand::BindAction(
+	const TSharedRef<IEditorPlusCommandsInterface>& _CommandMgr,
+	const FExecuteAction& ExecuteAction,
+	const FName& FriendlyName,
+	const EUserInterfaceActionType& Type,
+	const FInputChord& Chord,
+	const FName& LoctextNamespace,
+	const FSlateIcon& Icon)
+{
+	this->CommandMgr = _CommandMgr;
+	BindAction(ExecuteAction, FriendlyName, Type, Chord, LoctextNamespace, Icon);
+	return AsShared();
+}
+
+TSharedRef<FEditorPlusMenuBase> FEditorPlusCommand::BindAction(
+	const FExecuteAction& ExecuteAction,
+	const FName& FriendlyName,
+	const EUserInterfaceActionType& Type,
+	const FInputChord& Chord,
+	const FName& LoctextNamespace,
+	const FSlateIcon& Icon)
+{
+	CommandInfo = MakeShared<FEditorPlusCommandInfo>(
+		Name, ExecuteAction, FriendlyName, Tips, Hook, Type,
+		Chord, LoctextNamespace, Icon);
+	return AsShared();
+}
+
+
+FEditorPlusCommand::~FEditorPlusCommand()
+{
+	FEditorPlusCommand::Unregister();
+}
+
+
+void FEditorPlusCommand::Register(FMenuBuilder& MenuBuilder)
+{
+	if (!CommandInfo.IsValid()) return;
+	
+	if (CommandMgr.IsValid())
+	{
+		CommandMgr->AddCommand(CommandInfo.ToSharedRef());
+		MenuBuilder.PushCommandList(CommandMgr->GetCommandList());
+    	MenuBuilder.AddMenuEntry(CommandInfo->Info, CommandInfo->Hook);
+    	MenuBuilder.PopCommandList();	
+	}
+	else
+	{
+		MenuBuilder.AddMenuEntry(
+			FText::FromName(CommandInfo->Name), FText::FromName(CommandInfo->Tips), CommandInfo->Icon,
+			CommandInfo->ExecuteAction, CommandInfo->Hook, CommandInfo->Type);
 	}
 }
 
 
-void FEditorPlusWidget::Register(FMenuBuilder& MenuBuilder, const FName& ParentPath)
+void FEditorPlusCommand::Unregister()
 {
-	MenuBuilder.AddWidget(Widget, FText::FromString(""));
+	if (CommandMgr.IsValid() && CommandInfo.IsValid())
+	{
+		CommandMgr->RemoveCommand(CommandInfo.ToSharedRef());
+	}
 }
-
-
-void FEditorPlusToolMenu::Register(FMenuBuilder& MenuBuilder, const FName& ParentPath)
-{
-	Tool->OnBuildMenu(MenuBuilder);
-}
-
-
-void FEditorPlusToolMenu::Unregister()
-{
-	Tool->OnDestroyMenu();
-}
-
-
-FEditorPlusPathMenu::FEditorPlusPathMenu(const FName& Path, const FExecuteAction& ExecuteAction, const bool bMergeMenu)
-	: Path(Path), ExecuteAction(ExecuteAction)
-{
-	Menu = FEditorPlusMenuManager::RegisterPath(Path, ExecuteAction, bMergeMenu);
-}
-
-FEditorPlusPathMenu::~FEditorPlusPathMenu()
-{
-	FEditorPlusMenuManager::UnregisterPath(Path, Menu.ToSharedRef());
-}
+//
+// endregion FEditorPlusCommand
+// ---------------------------------------------------------------------

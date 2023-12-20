@@ -9,39 +9,47 @@ template <class DelegateClass, class BuilderClass, class Subsystem>
 class TDelegateHolderBase
 {
 public:
-	static TMap<FName, DelegateClass>& DelegateMap()
+	static TMap<FName, DelegateClass>* DelegateMap()
 	{
 		return Subsystem::template GetDelegateMap<DelegateClass>();
 	}
 	
 	static DelegateClass Register(const FName& UniqueId, const DelegateClass& Delegate)
 	{
-		auto& Map = DelegateMap();
-		checkf(!Map.Contains(UniqueId), TEXT("Duplicate Delegate: %s"), ToCStr(UniqueId.ToString()));
-		Map.Emplace(UniqueId, Delegate);
+		const auto Map = DelegateMap();
+		if(!Map) return nullptr;
+		
+		checkf(!Map->Contains(UniqueId), TEXT("Duplicate Delegate: %s"), ToCStr(UniqueId.ToString()));
+		Map->Emplace(UniqueId, Delegate);
 		return DelegateClass::CreateStatic(&TDelegateHolderBase::OnApply, UniqueId);
 	}
 
 	static DelegateClass Update(const FName& UniqueId, const DelegateClass& Delegate)
 	{
-		auto& Map = DelegateMap();
-		Map.Emplace(UniqueId, Delegate);
+		const auto Map = DelegateMap();
+		if(!Map) return nullptr;
+		Map->Emplace(UniqueId, Delegate);
 		return DelegateClass::CreateStatic(&TDelegateHolderBase::OnApply, UniqueId);	
 	}
 	
 	static void OnApply(BuilderClass& MenuBuilder, const FName UniqueId)
 	{
-		auto& Map = DelegateMap();
-		if (!Map.Contains(UniqueId))
+		const auto Map = DelegateMap();
+		if(!Map) return;
+		
+		if (!Map->Contains(UniqueId))
 		{
 			return;
 		}
-		Map[UniqueId].ExecuteIfBound(MenuBuilder);
+		(*Map)[UniqueId].ExecuteIfBound(MenuBuilder);
 	}
 	
 	static DelegateClass Get(const FName& UniqueId)
 	{
-		if (DelegateMap().Contains(UniqueId))
+		const auto Map = DelegateMap();
+		if(!Map) return nullptr;
+		
+		if (Map->Contains(UniqueId))
 		{
 			return DelegateClass::CreateStatic(&TDelegateHolderBase::OnApply, UniqueId);
 		}
@@ -50,14 +58,17 @@ public:
 
 	static int32 Remove(const FName& UniqueId)
 	{
-		auto& Map = DelegateMap();
-		return Map.Remove(UniqueId);
+		const auto Map = DelegateMap();
+		if(!Map) return INDEX_NONE;
+		
+		return Map->Remove(UniqueId);
 	}
 
 	static bool Contains(const FName& UniqueId)
 	{
-		auto& Map = DelegateMap();
-		return Map.Contains(UniqueId);
+		const auto Map = DelegateMap();
+		if(!Map) return INDEX_NONE;
+		return Map->Contains(UniqueId);
 	}
 
 };
@@ -115,15 +126,16 @@ class FEditorPlusMenuManager: public TSharedFromThis<FEditorPlusMenuManager>
 public:
 	FEditorPlusMenuManager();
 
-	static TSharedRef<FEditorPlusMenuManager> Get()
+	static TSharedPtr<FEditorPlusMenuManager> Get()
 	{
 		return FEditorPlusModule::Get().GetMenuManager();
 	}
 	
 	template <class DelegateClass>
-	static TMap<FName, DelegateClass>& GetDelegateMap()
+	static TMap<FName, DelegateClass>* GetDelegateMap()
 	{
-		return Get()->DelegateMap.Get<TDelegateClassMap<DelegateClass>>();
+		if(!Get().IsValid()) return nullptr;
+		return &(Get()->DelegateMap.Get<TDelegateClassMap<DelegateClass>>());
 	}
 
 	template <class DelegateClass>
@@ -156,10 +168,11 @@ public:
 		return TDelegateHolder<DelegateClass, FEditorPlusMenuManager>::Contains(UniqueId);
 	}
 
-	static TSharedPtr<FEditorPlusMenuBase> RegisterPath(const FName& Path, const FExecuteAction& ExecuteAction, const bool bMergeMenu);
-	static bool UnregisterPath(const FName& Path, const TSharedRef<FEditorPlusMenuBase>& Command);	
-
-	static void ExecutePathMenu(const FName& Path, FMenuBuilder& MenuBuilder, const TArray<FName>& MergedSubMenuNames, const bool bMerge);
+	static TSharedPtr<FEditorPlusMenuBase> RegisterPath(const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Menu=nullptr);
+	static TSharedPtr<FEditorPlusMenuBase> RegisterPathAction(const FString& Path, const FExecuteAction& ExecuteAction, const FName& Hook=NAME_None);
+	static bool UnregisterPath(const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Leaf=nullptr);
+	static bool UnregisterPath(const FString& Path, const FName& UniqueId);
+	static TSharedPtr<FEditorPlusMenuBase> GetNodeByPath(const FString& Path);
 	
 protected:
 

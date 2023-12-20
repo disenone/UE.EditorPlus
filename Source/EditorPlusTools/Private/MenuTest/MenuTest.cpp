@@ -1,4 +1,5 @@
 ﻿#include "MenuTest.h"
+#include "EditorPlusPath.h"
 #include "EditorPlusUtils.h"
 
 DEFINE_LOG_CATEGORY(LogMenuTest);
@@ -17,7 +18,7 @@ public:
 
 void FMenuTest::OnStartup()
 {
-	BuildMenu();
+	// BuildMenu();
 	// BuildSubMenu();
 	// RegisterConsoleCommand();
 	BuildPathMenu();
@@ -25,118 +26,123 @@ void FMenuTest::OnStartup()
 
 void FMenuTest::OnShutdown()
 {
+	for(auto Menu: Menus)
+	{
+		if(Menu.IsValid()) Menu->Unregister();
+	}
+	Menus.Empty();
 }
 
 void FMenuTest::BuildMenu()
 {
-	if (!Menu.IsValid())
-	{
-		Menu = 
-    	NEW_ED_MENU(FEditorPlusMenuBar)("MenuTest", "Open the MenuTest Menu", "MenuTest")
-    	->AddMenuBarExtension(TEXT("EditorPlusTools"), EExtensionHook::After)
-		;
-	}
-
-	Menu->AddChildren({
-	NEW_ED_MENU(FEditorPlusSection)("Section 1", "Section 1")
-	->Content({
-		NEW_ED_MENU(FEditorPlusMenu)(
-			"Command1",
-			"Command1 tips",
-			FExecuteAction::CreateLambda([]
-				{
-					UE_LOG(LogMenuTest, Display, TEXT("clicked Command1"));
-				}),
-			"Command1"),
-		NEW_ED_MENU(FEditorPlusMenu)(
-			"Command2",
-			"Command2 tips",
-			FExecuteAction::CreateLambda([]
-				{
-					UE_LOG(LogMenuTest, Display, TEXT("clicked Command2"));
-				}),
-			"Command2"),
-	}),
-	NEW_ED_MENU(FEditorPlusSeparator)("Separator1"),
-	NEW_ED_MENU(FEditorPlusSubMenu)("Sub Menu 1", "Open the Sub Menu 1", "Sub Menu 1")
-	->Content({
-		NEW_ED_MENU(FEditorPlusMenu)(
-			"Command3",
-			"Command3 tips",
-			FExecuteAction::CreateLambda([]
-				{
-					UE_LOG(LogMenuTest, Display, TEXT("clicked Command3"));
-				}),
-			"Command3"),
-		NEW_ED_MENU(FEditorPlusMenu)(
-			"Command4",
-			"Command4 tips",
-			FExecuteAction::CreateLambda([]
-			{
-				UE_LOG(LogMenuTest, Display, TEXT("clicked Command4"));
-			})),
-		NEW_ED_MENU(FEditorPlusMenu)(
-			FMenuTestCommands::Get(),
-			"Command5",
-			"Command5",
-			"Command1 tips",
-			FExecuteAction::CreateLambda([]
-			{
-				UE_LOG(LogMenuTest, Display, TEXT("clicked Command5"));
-			})),
-		NEW_ED_MENU(FEditorPlusWidget)(
-			SNew(SHorizontalBox)
-			 + SHorizontalBox::Slot()
-			 .AutoWidth()
-			 [
-				 SAssignNew(InputText, SEditableTextBox)
-				 .MinDesiredWidth(50)
-				 .Text(FText::FromName("FMenuTest"))
-			 ]
-			 + SHorizontalBox::Slot()
-			 .AutoWidth()
-			 .Padding(5, 0, 0, 0)
-			 [
-				 SNew(SButton)
-				 .Text(FText::FromName("FMenuTest"))
-				 .OnClicked(FOnClicked::CreateSP(this, &FMenuTest::OnClickButton))
-			 ]
-			),
-		NEW_ED_MENU(FEditorPlusMenu)(
-			FMenuTestCommands::Get(),
-			"Command6",
-			"Command6",
-			"Command6 tips",
-			FExecuteAction::CreateLambda([]
-			{
-				UE_LOG(LogMenuTest, Display, TEXT("clicked Command6"));
-			})),
-	})
-	});
+	// if (!Menu.IsValid())
+	// {
+	// 	Menu = 
+ //    	NEW_ED_MENU(FEditorPlusMenuBar)("MenuTest", "Open the MenuTest Menu", "MenuTest")
+ //    	->AddMenuBarExtension(TEXT("EditorPlusTools"), EExtensionHook::After)
+	// 	;
+	// }
+	//
+	// Menu->AddChildren({
+	// NEW_ED_MENU(FEditorPlusSection)("Section 1", "Section 1")
+	// ->Content({
+	// 	NEW_ED_MENU(FEditorPlusMenu)(
+	// 		"Command1",
+	// 		"Command1 tips",
+	// 		FExecuteAction::CreateLambda([]
+	// 			{
+	// 				UE_LOG(LogMenuTest, Display, TEXT("clicked Command1"));
+	// 			}),
+	// 		"Command1"),
+	// 	NEW_ED_MENU(FEditorPlusMenu)(
+	// 		"Command2",
+	// 		"Command2 tips",
+	// 		FExecuteAction::CreateLambda([]
+	// 			{
+	// 				UE_LOG(LogMenuTest, Display, TEXT("clicked Command2"));
+	// 			}),
+	// 		"Command2"),
+	// }),
+	// NEW_ED_MENU(FEditorPlusSeparator)("Separator1"),
+	// NEW_ED_MENU(FEditorPlusSubMenu)("Sub Menu 1", "Open the Sub Menu 1", "Sub Menu 1")
+	// ->Content({
+	// 	NEW_ED_MENU(FEditorPlusMenu)(
+	// 		"Command3",
+	// 		"Command3 tips",
+	// 		FExecuteAction::CreateLambda([]
+	// 			{
+	// 				UE_LOG(LogMenuTest, Display, TEXT("clicked Command3"));
+	// 			}),
+	// 		"Command3"),
+	// 	NEW_ED_MENU(FEditorPlusMenu)(
+	// 		"Command4",
+	// 		"Command4 tips",
+	// 		FExecuteAction::CreateLambda([]
+	// 		{
+	// 			UE_LOG(LogMenuTest, Display, TEXT("clicked Command4"));
+	// 		})),
+	// 	NEW_ED_MENU(FEditorPlusMenu)(
+	// 		FMenuTestCommands::Get(),
+	// 		"Command5",
+	// 		"Command5",
+	// 		"Command1 tips",
+	// 		FExecuteAction::CreateLambda([]
+	// 		{
+	// 			UE_LOG(LogMenuTest, Display, TEXT("clicked Command5"));
+	// 		})),
+	// 	NEW_ED_MENU(FEditorPlusWidget)(
+	// 		SNew(SHorizontalBox)
+	// 		 + SHorizontalBox::Slot()
+	// 		 .AutoWidth()
+	// 		 [
+	// 			 SAssignNew(InputText, SEditableTextBox)
+	// 			 .MinDesiredWidth(50)
+	// 			 .Text(FText::FromName("FMenuTest"))
+	// 		 ]
+	// 		 + SHorizontalBox::Slot()
+	// 		 .AutoWidth()
+	// 		 .Padding(5, 0, 0, 0)
+	// 		 [
+	// 			 SNew(SButton)
+	// 			 .Text(FText::FromName("FMenuTest"))
+	// 			 .OnClicked(FOnClicked::CreateSP(this, &FMenuTest::OnClickButton))
+	// 		 ]
+	// 		),
+	// 	NEW_ED_MENU(FEditorPlusMenu)(
+	// 		FMenuTestCommands::Get(),
+	// 		"Command6",
+	// 		"Command6",
+	// 		"Command6 tips",
+	// 		FExecuteAction::CreateLambda([]
+	// 		{
+	// 			UE_LOG(LogMenuTest, Display, TEXT("clicked Command6"));
+	// 		})),
+	// })
+	// });
 
 }
 
 void FMenuTest::BuildSubMenu()
 {
-	if (!SubMenu.IsValid())
-	{
-		SubMenu = 
-		NEW_ED_MENU(FEditorPlusSubMenu)("MenuTestSub", "Open the MenuTest Menu")
-		->AddMenuExtension(TEXT("Miscellaneous"), EExtensionHook::After, "MenuTestSub")
-		->Content
-		({
-			NEW_ED_MENU(FEditorPlusMenu)(
-				FMenuTestCommands::Get(),
-				"Command7",
-				"Command7",
-				"Command7 tips",
-				FExecuteAction::CreateLambda([]
-				{
-					UE_LOG(LogMenuTest, Display, TEXT("clicked Command7"));
-				})),	
-		})
-		;
-	}	
+	// if (!SubMenu.IsValid())
+	// {
+	// 	SubMenu = 
+	// 	NEW_ED_MENU(FEditorPlusSubMenu)("MenuTestSub", "Open the MenuTest Menu")
+	// 	->AddMenuExtension(TEXT("Miscellaneous"), EExtensionHook::After, "MenuTestSub")
+	// 	->Content
+	// 	({
+	// 		NEW_ED_MENU(FEditorPlusMenu)(
+	// 			FMenuTestCommands::Get(),
+	// 			"Command7",
+	// 			"Command7",
+	// 			"Command7 tips",
+	// 			FExecuteAction::CreateLambda([]
+	// 			{
+	// 				UE_LOG(LogMenuTest, Display, TEXT("clicked Command7"));
+	// 			})),	
+	// 	})
+	// 	;
+	// }	
 }
 
 
@@ -160,28 +166,25 @@ FReply FMenuTest::OnClickButton()
 	return FReply::Handled();
 }
 
+void FMenuTest::RegisterPathSuccess(const FString& Path)
+{
+	const TSharedPtr<FEditorPlusMenuBase> Ret =
+		FEditorPlusPath::RegisterPathAction(Path, FExecuteAction::CreateLambda([Path]
+		{
+			UE_LOG(LogMenuTest, Display, TEXT("Click [%s]"), ToCStr(Path));
+		}));
+	checkf(Ret.IsValid(), TEXT("failed to register [%s]"), ToCStr(Path))
+	Menus.Push(Ret);	
+}
+
+
 void FMenuTest::BuildPathMenu()
 {
-	if (!PathMenus.Num())
-	{
-		PathMenus.Add(MakeShared<FEditorPlusPathMenu>("/MenuTest/Sub Menu 1/Sub Menu 1/a", FExecuteAction::CreateLambda([]
-		{
-			UE_LOG(LogMenuTest, Display, TEXT("/MenuTest/Sub Menu 1/Sub Menu 1/a"));
-		}), false));
-		PathMenus.Add(MakeShared<FEditorPlusPathMenu>("/MenuTest/Sub Menu 1/Sub Menu 1/b", FExecuteAction::CreateLambda([]
-		{
-			UE_LOG(LogMenuTest, Display, TEXT("/MenuTest/Sub Menu 1/Sub Menu 1/b"));
-		}), false));	
-
-		PathMenus.Add(MakeShared<FEditorPlusPathMenu>("/MenuTest/Sub Menu 1/Sub Menu 1/a", FExecuteAction::CreateLambda([]
-		{
-			UE_LOG(LogMenuTest, Display, TEXT("/MenuTest/Sub Menu 1/Sub Menu 1/a"));
-		}), true));
-
-		PathMenus.Add(MakeShared<FEditorPlusPathMenu>("/MenuTest/Sub Menu 1/Sub Menu 1/b", FExecuteAction::CreateLambda([]
-		{
-			UE_LOG(LogMenuTest, Display, TEXT("/MenuTest/Sub Menu 1/Sub Menu 1/b"));
-		}), true));
-
-	}
+	RegisterPathSuccess("/MenuTest/SubMenu1/SubMenu1/Path1");
+	RegisterPathSuccess("/MenuTest/SubMenu1/SubMenu1/Path2");
+	RegisterPathSuccess("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1/Path3");
+	RegisterPathSuccess("MenuTest/<SubMenu>SubMenu1/<Section>Section1/Path4");
+	RegisterPathSuccess("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1/<Separator>Separator1/Path5");
+	RegisterPathSuccess("<Hook>Separator1/Path6");
+	RegisterPathSuccess("<Hook>Section1/Path7");
 }

@@ -1,5 +1,12 @@
 ﻿#include "EditorPlusUtils.h"
 
+
+FString FEditorPlusUtils::GetPathDelimiter()
+{
+	static const FString Delimiter = "/";
+	return Delimiter;
+}
+
 TArray<FString> FEditorPlusUtils::SplitString(const FString& InString, const FString& InDelimiter)
 {
 	FString Left = InString;
@@ -28,8 +35,13 @@ TArray<FString> FEditorPlusUtils::SplitString(const FString& InString, const FSt
 	return Ret;
 }
 
-
 FName FEditorPlusUtils::PathJoin(const FName& Left, const FName& Right, const FString& InDelimiter)
 {
 	return FName(Left.ToString() + InDelimiter + Right.ToString());
+}
+
+FName FEditorPlusUtils::GenUniqueId(const FName& Name)
+{
+	static uint32 Id = 0;
+	return FName(Name.ToString() + FString::FromInt(Id++));
 }

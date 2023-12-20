@@ -16,71 +16,185 @@ TArray<FString> CheckAndSplitPath(const FName& Path, const int32 MinLen = 0)
 }
 
 
-TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::Register(const FName& Path, const FExecuteAction& ExecuteAction, bool bMergeSubMenu)
+TArray<FString> FEditorPlusPathMenuManager::NormalizeSplitPath(const FString& Path)
 {
-	TArray<FString>	Split = CheckAndSplitPath(Path, 2);
+	if(Path == "") return TArray<FString>();
 
-	const FName BarName(Split[0]);
+	const FString Delimiter = FEditorPlusUtils::GetPathDelimiter();
 
-	// Build MenuBar
-	TSharedPtr<FEditorPlusPathMenuBar> Bar;
-	if (BarMap.Contains(BarName))
+	TArray<FString> Split = FEditorPlusUtils::SplitString(Path, Delimiter);
+	if(Split.IsEmpty()) return TArray<FString>();
+	
+	TArray<FString> NormalizedNames;
+
+	for(size_t i = 0; i < Split.Num(); ++i)
 	{
-		Bar = BarMap[BarName];
-	}
-	else
-	{
-		Bar = MakeShared<FEditorPlusPathMenuBar>(BarName);
-		BarMap.Add(BarName, Bar.ToSharedRef());
-		Bar->AddMenuBarExtension("Help", EExtensionHook::After);
-	}
-
-	// Build SubMenu
-	TSharedPtr<FEditorPlusMenuBase> Parent = Bar;
-	for (int i = 1; i < Split.Num() - 1; ++i)
-	{
-		const FName SubMenuName(Split[i]);
-		TArray<TSharedRef<FEditorPlusPathSubMenu>> Subs = Parent->GetChildrenByName<FEditorPlusPathSubMenu>(SubMenuName);
-
-		if (!Subs.Num())
+		const auto& Name = Split[i];
+		if(Name.StartsWith(FEditorPlusMenuBase::PathTagLeft) && Name.Find(FEditorPlusMenuBase::PathTagRight) != INDEX_NONE)
 		{
-			TSharedPtr<FEditorPlusMenuBase> SubMenu = MakeShared<FEditorPlusPathSubMenu>(SubMenuName);
-			Parent->AddChild(SubMenu.ToSharedRef());
-			Parent = SubMenu;
+			const FString PathTag = Name.Left(Name.Find(">") + 1);
+			if(FEditorPlusMenuBase::GetPathTagType(PathTag)._to_integral() == EEditorPlusMenuType::None)
+			{
+				UE_LOG(LogEditorPlus, Error, TEXT("Invalid Path Tag [%s] in Path [%s]"), ToCStr(PathTag), ToCStr(Path));
+				return TArray<FString>();
+			}
+			
+			NormalizedNames.Push(Name);
 		}
 		else
 		{
-			Parent = Subs[0];
+			if(i == 0) NormalizedNames.Push(FEditorPlusMenuBase::GetTypePathTag(EEditorPlusMenuType::MenuBar) + Name);
+			else if(i == Split.Num() - 1) NormalizedNames.Push(FEditorPlusMenuBase::GetTypePathTag(EEditorPlusMenuType::Command) + Name);
+			else NormalizedNames.Push(FEditorPlusMenuBase::GetTypePathTag(EEditorPlusMenuType::SubMenu) + Name);
 		}
 	}
 
-	// Build Command Menu
-	TSharedRef<FEditorPlusPathCommand> Command = MakeShared<FEditorPlusPathCommand>(
-		FName(Split[Split.Num() - 1]), ExecuteAction, bMergeSubMenu);
-	Parent->AddChild(Command);
-	return Command;
+	if(!NormalizedNames[0].StartsWith(FEditorPlusMenuBase::GetTypePathTag(EEditorPlusMenuType::Hook)))
+		NormalizedNames.Insert(FEditorPlusMenuBase::GetTypePathTag(EEditorPlusMenuType::Hook) + "Help", 0);
+
+	return NormalizedNames;
 }
 
 
-bool RemoveCommand(TSharedRef<FEditorPlusMenuBase> Parent, const TArray<FString>& Paths, const int ParentIdx, const TSharedRef<FEditorPlusMenuBase>& Command)
+FString FEditorPlusPathMenuManager::NormalizePath(const FString& Path)
 {
-	// DFS Remove Command
+	const auto NormalizedNames = NormalizeSplitPath(Path);
+
+	if(NormalizedNames.IsEmpty()) return "";
+	
+	const auto Delimiter = FEditorPlusUtils::GetPathDelimiter();
+	return Delimiter + FString::Join(NormalizedNames, ToCStr(Delimiter));
+}
+
+
+TSharedPtr<FEditorPlusHook> FEditorPlusPathMenuManager::MakeRoot(const FString& PathName)
+{
+	const auto TypeAneName = FEditorPlusMenuBase::GetTypeAndNameByPathName(PathName);
+	
+	if(TypeAneName.Get<0>()._to_integral() != EEditorPlusMenuType::Hook)
+	{
+		UE_LOG(LogEditorPlus, Error, TEXT("Invalid Root Path: [%s], need to be <Hook>xxx"), ToCStr(PathName));
+		return nullptr;
+	}
+	
+	if (RootMap.Contains(PathName)) return RootMap[PathName];
+
+	const FString& Name = TypeAneName.Get<1>();
+	auto Hook = NEW_EP_MENU(FEditorPlusHook)(FName(Name));
+	RootMap.Add(PathName, Hook);
+	return Hook;
+}
+
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::MakeNode(
+	const TSharedRef<FEditorPlusMenuBase>& Parent, const FString& PathName, const TSharedPtr<FEditorPlusMenuBase>& Node)
+{
+	if(Node.IsValid())
+	{
+		const auto TypeAneName = FEditorPlusMenuBase::GetTypeAndNameByPathName(PathName);
+		if(TypeAneName.Get<0>()._to_integral() != Node->GetType())
+		{
+			UE_LOG(
+				LogEditorPlus, Error, TEXT("PathName dose not match Node Type, PathName Type: [%s], Node Type: [%s]"),
+				StringCast<TCHAR>(TypeAneName.Get<0>()._to_string()).Get(), StringCast<TCHAR>(Node->GetType()._to_string()).Get());
+			return nullptr;
+		}
+		
+		Parent->AddChild(Node.ToSharedRef());
+		return Node;	
+	}
+	
+	TArray<TSharedRef<FEditorPlusMenuBase>> Subs = Parent->GetChildrenByPathName(PathName);
+
+	if (!Subs.Num())
+	{
+		const TSharedPtr<FEditorPlusMenuBase> NewNode = FEditorPlusMenuBase::CreateByPathName(PathName);
+		if(!NewNode.IsValid()) return nullptr;
+
+		Parent->AddChild(NewNode.ToSharedRef());
+		
+		return NewNode;
+	}
+	
+	return Subs[0];
+}
+
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::DoRegister(
+	const TArray<FString>& NormalizedPathNames, const TSharedPtr<FEditorPlusMenuBase>& Node)
+{
+
+	// Root
+	const TSharedPtr<FEditorPlusHook> Root = MakeRoot(NormalizedPathNames[0]);
+	if(!Root.IsValid()) return nullptr;
+	
+	TSharedPtr<FEditorPlusMenuBase> Parent = Root;
+	
+	// Build Node
+	for (int i = 1; i < NormalizedPathNames.Num() - 1; ++i)
+	{
+		Parent = MakeNode(Parent.ToSharedRef(), NormalizedPathNames[i]);
+		if(!Parent.IsValid()) return nullptr;
+	}
+
+	// Build Last Node
+	auto Ret = MakeNode(Parent.ToSharedRef(), NormalizedPathNames[NormalizedPathNames.Num() - 1], Node);
+
+	// Register to LevelEditor
+	Root->AddExtension();
+
+	return Ret;
+}
+
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::RegisterPath(const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Menu)
+{
+	return DoRegister(Path, Menu);	
+}
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::RegisterAction(
+	const FString& Path, const FExecuteAction& ExecuteAction, const FName& Hook)
+{
+	const auto NormalizedNames = NormalizeSplitPath(Path);
+
+	const auto TypeAneName = FEditorPlusMenuBase::GetTypeAndNameByPathName(NormalizedNames[NormalizedNames.Num() - 1]);
+
+	if(TypeAneName.Get<0>()._to_integral() != EEditorPlusMenuType::Command)
+	{
+		UE_LOG(LogEditorPlus, Error, TEXT("Invalid Path [%s] for RegisterAction, Path Leaf need to be <Command>xxx"), ToCStr(Path));
+		return nullptr;
+	}
+
+	const FName Name = FName(TypeAneName.Get<1>());
+	const auto Command = NEW_EP_MENU(FEditorPlusCommand)(Name, Name, Hook == "" ? Name : Hook)
+		->BindAction(ExecuteAction);
+	
+	return DoRegister(NormalizedNames, Command);
+}
+
+
+bool FEditorPlusPathMenuManager::RemoveNode(
+	const TSharedRef<FEditorPlusMenuBase>& Parent, const TArray<FString>& Paths,
+	const int ParentIdx, const TSharedPtr<FEditorPlusMenuBase>& Leaf)
+{
+	// DFS Remove Node
 	if (ParentIdx >= Paths.Num() - 1) return false;
 
-	const FName ChildName(Paths[ParentIdx + 1]);
+	const FString& ChildName = Paths[ParentIdx + 1];
 
 	if(ParentIdx == Paths.Num() - 2)
 	{
-		if(Parent->RemoveChild(Command))
+		if(Leaf.IsValid())
 		{
-			return true;
+			return Parent->RemoveChild(Leaf.ToSharedRef());
 		}
-		return false;
+		
+		return Parent->RemoveChildByPathName(ChildName);
 	}
 	
-	for(const auto& Child: Parent->GetChildrenByName(ChildName))
+	for(const auto& Child: Parent->GetChildrenByPathName(ChildName))
 	{
-		if(RemoveCommand(Child, Paths, ParentIdx + 1, Command))
+		if(RemoveNode(Child, Paths, ParentIdx + 1, Leaf))
 		{
 			if(Child->IsEmpty())
 			{
@@ -94,19 +208,49 @@ bool RemoveCommand(TSharedRef<FEditorPlusMenuBase> Parent, const TArray<FString>
 }
 
 
-bool FEditorPlusPathMenuManager::Unregister(const FName& Path, const TSharedRef<FEditorPlusMenuBase>& Command)
+bool FEditorPlusPathMenuManager::RemoveNode(
+	const TSharedRef<FEditorPlusMenuBase>& Parent, const TArray<FString>& Paths,
+	const int ParentIdx, const FName& UniqueId)
 {
-	TArray<FString>	Split = CheckAndSplitPath(Path, 2);
+	// DFS Remove Node
+	if (ParentIdx >= Paths.Num() - 1) return false;
 
-	const FName BarName(Split[0]);
-	
-	if (!BarMap.Contains(BarName)) return false;
+	const FString& ChildName = Paths[ParentIdx + 1];
 
-	if(RemoveCommand(BarMap[BarName], Split, 0, Command))
+	if(ParentIdx == Paths.Num() - 2)
 	{
-		if(BarMap[BarName]->IsEmpty())
+		return Parent->RemoveChildByUniqueId(UniqueId);
+	}
+	
+	for(const auto& Child: Parent->GetChildrenByPathName(ChildName))
+	{
+		if(RemoveNode(Child, Paths, ParentIdx + 1, UniqueId))
 		{
-			BarMap.Remove(BarName);
+			if(Child->IsEmpty())
+			{
+				Parent->RemoveChild(Child);
+			}
+			return true;
+		}
+	}
+
+	return false;	
+}
+
+
+bool FEditorPlusPathMenuManager::Unregister(const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Leaf)
+{
+	const auto PathNames = NormalizeSplitPath(Path);
+	if(PathNames.IsEmpty()) return false;
+
+	const FString& RootName = PathNames[0];
+	if (!RootMap.Contains(RootName)) return false;
+
+	if(RemoveNode(RootMap[RootName], PathNames, 0, Leaf))
+	{
+		if(RootMap[RootName]->IsEmpty())
+		{
+			RootMap.Remove(RootName);
 		}
 		return true;
 	}
@@ -115,45 +259,44 @@ bool FEditorPlusPathMenuManager::Unregister(const FName& Path, const TSharedRef<
 }
 
 
-TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::GetMenuByPath(const FName& Path)
+bool FEditorPlusPathMenuManager::Unregister(const FString& Path, const FName& UniqueId)
 {
-	const TArray<FString> Split = CheckAndSplitPath(Path);
+	const auto PathNames = NormalizeSplitPath(Path);
+	if(PathNames.IsEmpty()) return false;
 
-	if(!Split.Num()) return nullptr;
+	const FString& RootName = PathNames[0];
+	if (!RootMap.Contains(RootName)) return false;
 
-	if(!BarMap.Contains(FName(Split[0]))) return nullptr;
-	
-	TSharedRef<FEditorPlusMenuBase> CurrentMenu = BarMap[FName(Split[0])];
-
-	for (int i = 1; i < Split.Num(); ++i)
+	if(RemoveNode(RootMap[RootName], PathNames, 0, UniqueId))
 	{
-		const FName SubMenuName(Split[i]);
-		TArray<TSharedRef<FEditorPlusPathSubMenu>> Subs = CurrentMenu->GetChildrenByName<FEditorPlusPathSubMenu>(SubMenuName);
-
-		if(!Subs.Num()) return nullptr;
-
-		CurrentMenu = Subs[0];
+		if(RootMap[RootName]->IsEmpty())
+		{
+			RootMap.Remove(RootName);
+		}
+		return true;
 	}
 
-	return CurrentMenu;
+	return false;	
 }
 
 
-
-void FEditorPlusPathMenuManager::ExecutePathMenu(const FName& Path, FMenuBuilder& MenuBuilder, const TArray<FName>& MergedSubMenuNames, const bool bMerge)
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::GetNodeByPath(const FString& Path)
 {
-	const TSharedPtr<FEditorPlusMenuBase> PathMenu = GetMenuByPath(Path);
-	if(!PathMenu.IsValid()) return;
+	const auto PathNames = NormalizeSplitPath(Path);
+	if(PathNames.IsEmpty()) return nullptr;
 
-	if(!PathMenu->HasMergeMenu(bMerge)) return;
+	const FString& RootName = PathNames[0];
+	if(!RootMap.Contains(RootName)) return nullptr;
+	
+	TSharedRef<FEditorPlusMenuBase> CurrentNode = RootMap[RootName];
 
-	for(const auto& Child: PathMenu->GetChildrenByType())
+	for (int i = 1; i < PathNames.Num(); ++i)
 	{
-		if(Child->IsType<FEditorPlusPathCommand>()
-			|| (!MergedSubMenuNames.Contains(Child->GetName())
-				&& PathMenu->HasMergeMenu(bMerge)))
-		{
-			Child->RegisterWithMerge(MenuBuilder, bMerge);
-		}
+		const auto Subs = CurrentNode->GetChildrenByPathName(PathNames[i]);
+
+		if(!Subs.Num()) return nullptr;
+
+		CurrentNode = Subs[0];
 	}
+	return CurrentNode;
 }

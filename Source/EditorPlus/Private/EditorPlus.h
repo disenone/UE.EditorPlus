@@ -30,9 +30,9 @@ public:
 		return "EditorPlus";
 	}
 
-	TSharedRef<FEditorPlusMenuManager> GetMenuManager()
+	TSharedPtr<FEditorPlusMenuManager> GetMenuManager() const
 	{
-		return MenuManager.ToSharedRef();
+		return MenuManager;
 	}
 	
 private:

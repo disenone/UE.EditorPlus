@@ -5,10 +5,10 @@ DEFINE_LOG_CATEGORY(LogMenuCollection);
 
 void FMenuCollection::OnStartup()
 {
-	// BuildMenu();
+	BuildMenu();
 	// BuildSubMenu();
 	// RegisterConsoleCommand();
-	BuildPathMenu();
+	// BuildPathMenu();
 }
 
 void FMenuCollection::OnShutdown()
@@ -17,7 +17,53 @@ void FMenuCollection::OnShutdown()
 
 void FMenuCollection::BuildMenu()
 {
+	if (Menu.IsValid()) return;
 
+	// Menu = 
+	// 	NEW_ED_MENU(FEditorPlusSubMenu)("SubMenuTest", "Open the MenuTest Menu", "MenuTest")
+	// 	->AddMenuExtension(TEXT("OpenPython"), EExtensionHook::After)
+	// 	;
+	//
+	// Menu->AddChildren({
+	// NEW_ED_MENU(FEditorPlusSection)("Section 1", "Section 1")
+	// ->Content({
+	// 	NEW_ED_MENU(FEditorPlusMenu)(
+	// 		"Command1",
+	// 		"Command1 tips",
+	// 		FExecuteAction::CreateLambda([]
+	// 			{
+	// 				UE_LOG(LogMenuCollection, Display, TEXT("clicked Command1"));
+	// 			}),
+	// 		"Command1"),
+	// 	NEW_ED_MENU(FEditorPlusMenu)(
+	// 		"Command2",
+	// 		"Command2 tips",
+	// 		FExecuteAction::CreateLambda([]
+	// 			{
+	// 				UE_LOG(LogMenuCollection, Display, TEXT("clicked Command2"));
+	// 			}),
+	// 		"Command2"),
+	// }),
+	// NEW_ED_MENU(FEditorPlusSeparator)("Separator1"),
+	// NEW_ED_MENU(FEditorPlusSubMenu)("Sub Menu 1", "Open the Sub Menu 1", "Sub Menu 1")
+	// ->Content({
+	// 	NEW_ED_MENU(FEditorPlusMenu)(
+	// 		"Command3",
+	// 		"Command3 tips",
+	// 		FExecuteAction::CreateLambda([]
+	// 			{
+	// 				UE_LOG(LogMenuCollection, Display, TEXT("clicked Command3"));
+	// 			}),
+	// 		"Command3"),
+	// 	NEW_ED_MENU(FEditorPlusMenu)(
+	// 		"Command4",
+	// 		"Command4 tips",
+	// 		FExecuteAction::CreateLambda([]
+	// 		{
+	// 			UE_LOG(LogMenuCollection, Display, TEXT("clicked Command4"));
+	// 		})),
+	// })
+	// });
 }
 
 void FMenuCollection::BuildSubMenu()
@@ -28,7 +74,7 @@ void FMenuCollection::BuildSubMenu()
 
 void FMenuCollection::BuildPathMenu()
 {
-	UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.File");
+	UToolMenu* ToolMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.File");
 
 	FToolMenuEntry Entry = FToolMenuEntry::InitMenuEntry(
 	TEXT("Test Menu"),
@@ -46,5 +92,5 @@ void FMenuCollection::BuildPathMenu()
 	Entry.InsertPosition.Name = NAME_None;
 	Entry.InsertPosition.Position = EToolMenuInsertType::First;
 	
-	Menu->AddMenuEntry(TEXT("Test Menu"), Entry);
+	ToolMenu->AddMenuEntry(TEXT("Test Menu"), Entry);
 }

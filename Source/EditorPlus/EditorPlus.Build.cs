@@ -53,6 +53,7 @@ public class EditorPlus: ModuleRules
 				"BlueprintGraph",
 				"AnimGraph",
 				"ComponentVisualizers",
+				"ToolMenus",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

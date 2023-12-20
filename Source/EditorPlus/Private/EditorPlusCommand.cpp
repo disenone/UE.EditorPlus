@@ -1,4 +1,4 @@
-﻿#include "EditorPlusCommand.h"
+﻿#include "..\Public\EditorPlusCommandInfo.h"
 
 
 void FEditorPlusCommandInfo::Register(FBindingContext* Context)
@@ -10,8 +10,10 @@ void FEditorPlusCommandInfo::Register(FBindingContext* Context)
 	FUICommandInfo::MakeCommandInfo(
 		Context->AsShared(),
 		Info, Name,
-		FInternationalization::ForUseOnlyByLocMacroAndGraphNodeTextLiterals_CreateText(ToCStr(FriendlyName.ToString()), *Namespace, ToCStr(Name.ToString())),
-		FInternationalization::ForUseOnlyByLocMacroAndGraphNodeTextLiterals_CreateText(ToCStr(Desc.ToString()), *Namespace, ToCStr(NameString + TEXT("_ToolTip"))),
+		FInternationalization::ForUseOnlyByLocMacroAndGraphNodeTextLiterals_CreateText(
+			ToCStr(FriendlyName.ToString()), *Namespace, ToCStr(Name.ToString())),
+		FInternationalization::ForUseOnlyByLocMacroAndGraphNodeTextLiterals_CreateText(
+			ToCStr(Tips.ToString()), *Namespace, ToCStr(NameString + TEXT("_ToolTip"))),
 		Icon, Type, Chord
 	);
 }

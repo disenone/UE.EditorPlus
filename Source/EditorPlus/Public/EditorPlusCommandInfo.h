@@ -1,5 +1,7 @@
 #pragma once
 
+#include "EditorPlusUtils.h"
+
 class EDITORPLUS_API FEditorPlusCommandInfo
 {
 public:
@@ -7,15 +9,18 @@ public:
 		const FName& Name,
 		const FExecuteAction& ExecuteAction,
 		const FName& FriendlyName = NAME_None,
-		const FName& Desc = NAME_None,
+		const FName& Tips = NAME_None,
 		const FName& Hook = NAME_None,
 		const EUserInterfaceActionType& Type = EUserInterfaceActionType::Button,
 		const FInputChord& Chord = FInputChord(),
 		const FName& LoctextNamespace = NAME_None,
-		const FSlateIcon& Icon = FSlateIcon())
+		const FSlateIcon& Icon = FSlateIcon(),
+		const FName& UniqueId = NAME_None)
 		:	Name(Name), FriendlyName(FriendlyName == NAME_None ? Name: FriendlyName),
-			Desc(Desc), Hook(Hook), Type(Type), Chord(Chord),
-			LoctextNamespace(LoctextNamespace), Icon(Icon), ExecuteAction(ExecuteAction) {}
+			Tips(Tips), Hook(Hook), Type(Type), Chord(Chord),
+			LoctextNamespace(LoctextNamespace), Icon(Icon), ExecuteAction(ExecuteAction),
+			UniqueId(UniqueId != NAME_None ? UniqueId: FEditorPlusUtils::GenUniqueId(Name))
+	{}
 
 	void Register(FBindingContext* Context);
 	void Unregister(FBindingContext* Context);
@@ -25,13 +30,14 @@ public:
 	TSharedPtr<FUICommandInfo> Info;
 	const FName Name;
 	const FName FriendlyName;
-	const FName Desc;
+	const FName Tips;
 	const FName Hook;
 	const EUserInterfaceActionType Type;
 	const FInputChord Chord;
 	const FName LoctextNamespace;
 	const FSlateIcon Icon;
 	const FExecuteAction ExecuteAction;
+	const FName UniqueId;
 };
 
 
@@ -93,23 +99,23 @@ public:
 	
 	virtual void AddCommand(TSharedRef<FEditorPlusCommandInfo> CommandInfo) override
 	{
-		const FName& UniqueName = CommandInfo->Name;
-		if (!CommandInfoMap.Contains(UniqueName))
+		const FName& UniqueId = CommandInfo->UniqueId;
+		if (!CommandInfoMap.Contains(UniqueId))
 		{
 			CommandContext::RegisterCommand(CommandInfo);
 			CommandInfo->MapAction(CommandList);
-			CommandInfoMap.Add(UniqueName, CommandInfo);
+			CommandInfoMap.Add(UniqueId, CommandInfo);
 		}
 	}
 
 	virtual void RemoveCommand(TSharedRef<FEditorPlusCommandInfo> CommandInfo) override
 	{
-		const FName& UniqueName = CommandInfo->Name;
-		if (CommandInfoMap.Contains(UniqueName))
+		const FName& UniqueId = CommandInfo->UniqueId;
+		if (CommandInfoMap.Contains(UniqueId))
 		{
 			CommandContext::UnregisterCommand(CommandInfo);
 			CommandInfo->UnmapAction(CommandList);
-			CommandInfoMap.Remove(UniqueName);
+			CommandInfoMap.Remove(UniqueId);
 		}
 	}
 	

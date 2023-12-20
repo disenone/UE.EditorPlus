@@ -14,10 +14,9 @@ private:
 	void BuildPathMenu();
 	void RegisterConsoleCommand();
 	FReply OnClickButton();
+	void RegisterPathSuccess(const FString& Path);
 	
-	TSharedPtr<FEditorPlusMenuBase> Menu;
-	TSharedPtr<FEditorPlusMenuBase> SubMenu;
-	TArray<TSharedPtr<FEditorPlusPathMenu>> PathMenus;
+	TArray<TSharedPtr<FEditorPlusMenuBase>> Menus;
 	TSharedPtr<SEditableTextBox> InputText;
 };
 

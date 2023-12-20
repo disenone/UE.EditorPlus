@@ -6,18 +6,34 @@ FEditorPlusMenuManager::FEditorPlusMenuManager()
 	PathMenuManager = MakeShared<FEditorPlusPathMenuManager>();
 }
 
-TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuManager::RegisterPath(const FName& Path, const FExecuteAction& ExecuteAction, const bool bMergeMenu)
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuManager::RegisterPath(
+	const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Menu)
 {
-	return Get()->PathMenuManager->Register(Path, ExecuteAction, bMergeMenu);
+	if(!Get().IsValid()) return nullptr;
+	return  Get()->PathMenuManager->RegisterPath(Path, Menu);
 }
 
-
-bool FEditorPlusMenuManager::UnregisterPath(const FName& Path, const TSharedRef<FEditorPlusMenuBase>& Command)
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuManager::RegisterPathAction(
+	const FString& Path, const FExecuteAction& ExecuteAction, const FName& Hook)
 {
-	return Get()->PathMenuManager->Unregister(Path, Command);
+	if(!Get().IsValid()) return nullptr;
+	return Get()->PathMenuManager->RegisterAction(Path, ExecuteAction, Hook);
 }
 
-void FEditorPlusMenuManager::ExecutePathMenu(const FName& Path, FMenuBuilder& MenuBuilder, const TArray<FName>& MergedSubMenuNames, const bool bMerge)
+bool FEditorPlusMenuManager::UnregisterPath(const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Leaf)
 {
-	return Get()->PathMenuManager->ExecutePathMenu(Path, MenuBuilder, MergedSubMenuNames, bMerge);
+	if(!Get().IsValid()) return false;
+	return Get()->PathMenuManager->Unregister(Path, Leaf);
+}
+
+bool FEditorPlusMenuManager::UnregisterPath(const FString& Path, const FName& UniqueId)
+{
+	if(!Get().IsValid()) return false;
+	return Get()->PathMenuManager->Unregister(Path, UniqueId);	
+}
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuManager::GetNodeByPath(const FString& Path)
+{
+	if(!Get().IsValid()) return nullptr;
+	return Get()->PathMenuManager->GetNodeByPath(Path);
 }

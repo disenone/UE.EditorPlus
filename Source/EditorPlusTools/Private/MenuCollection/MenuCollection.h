@@ -12,7 +12,8 @@ private:
 	void BuildMenu();
 	void BuildSubMenu();
 	void BuildPathMenu();
-	
+
+	TSharedPtr<FEditorPlusMenuBase> Menu;
 };
 
 DECLARE_LOG_CATEGORY_EXTERN(LogMenuCollection, Display, All);

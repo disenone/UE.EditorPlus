@@ -32,10 +32,10 @@ void FEditorPlusToolsImpl::AddTools()
 #endif
 	
 #ifdef EP_ENABLE_CLASS_BROWSER
-		Tools.Emplace(MakeShared<FClassBrowser>());
+		// Tools.Emplace(MakeShared<FClassBrowser>());
 #endif
 
-		Tools.Emplace(MakeShared<FMenuCollection>());
+		// Tools.Emplace(MakeShared<FMenuCollection>());
 	}
 
 }
@@ -54,22 +54,22 @@ void FEditorPlusToolsImpl::BuildMenu()
 	if (IsRunningCommandlet())
 		return;
 
-	if (!Menu.IsValid())
-	{
-		Menu = 
-		NEW_ED_MENU(FEditorPlusMenuBar)("EditorPlusTools", "Open the EditorPlusTools Menu", "EditorPlusTools")
-		->AddMenuBarExtension(TEXT("Help"), EExtensionHook::After)
-		;
-	}
+	// if (!Menu.IsValid())
+	// {
+	// 	Menu = 
+	// 	NEW_ED_MENU(FEditorPlusMenuBar)("EditorPlusTools", "Open the EditorPlusTools Menu", "EditorPlusTools")
+	// 	->AddMenuBarExtension(TEXT("Help"), EExtensionHook::After)
+	// 	;
+	// }
 
-	TArray<TSharedRef<FEditorPlusMenuBase>> ToolMenus;
-	ToolMenus.Reserve(Tools.Num());
-	for (const auto Tool: Tools)
-	{
-		ToolMenus.Emplace(NEW_ED_MENU(FEditorPlusToolMenu)(Tool));
-	}
-	
-	Menu->AddChildren(ToolMenus);
+	// TArray<TSharedRef<FEditorPlusMenuBase>> ToolMenus;
+	// ToolMenus.Reserve(Tools.Num());
+	// for (const auto Tool: Tools)
+	// {
+	// 	ToolMenus.Emplace(NEW_ED_MENU(FEditorPlusToolMenu)(Tool));
+	// }
+	//
+	// Menu->AddChildren(ToolMenus);
 }
 
 void FEditorPlusToolsImpl::RegisterConsoleCommand()
