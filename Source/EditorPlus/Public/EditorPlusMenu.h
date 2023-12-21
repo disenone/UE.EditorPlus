@@ -215,11 +215,8 @@ public:
 	}
 	
 	virtual void Register(FMenuBuilder& MenuBuilder);
-	
 	virtual void Register(FMenuBarBuilder& MenuBuilder) {}
-
-	virtual void RegisterWithMerge(FMenuBuilder& MenuBuilder, const bool bMerge) { Register(MenuBuilder); }
-	
+	virtual TSharedRef<FEditorPlusMenuBase> RegisterPath();
 	virtual void Unregister();
 	
 	virtual FName GetName() const { return Name; }
@@ -260,7 +257,7 @@ public:
 		}
 		return TTuple<EEditorPlusMenuType, FString>(EEditorPlusMenuType::None, PathName);
 	}
-	void SetParentPath(const FString& ParentPath)
+	virtual void SetParentPath(const FString& ParentPath)
 	{
 		Path = ParentPath / GetPathName();
 		if (!Children.IsEmpty())
@@ -271,6 +268,7 @@ public:
 			}
 		}
 	}
+	virtual FString GetPath() { if (Path.IsEmpty()) Path = GetPathName(); return Path; }
 	
 	virtual bool AllowRole(const EEditorPlusMenuRole Role) const { return false; }
 	
@@ -566,6 +564,7 @@ public:
 		return AddMenuExtension(ExtensionHook, Position);
 	}
 
+	virtual void SetParentPath(const FString& ParentPath) override;
 protected:
 	
 	TSharedPtr<FEditorPlusCommandInfo> CommandInfo;
@@ -581,7 +580,7 @@ public:
 	explicit FEditorPlusWidget(const FName& Name, const FName& Tips="", const FName& Hook=NAME_None)
 		: FBaseType(Name, Tips, Hook) {}	
 	
-	void BindWidget(const TSharedRef<SWidget>& _Widget) { this->Widget = _Widget; }
+	TSharedRef<FEditorPlusMenuBase> BindWidget(const TSharedRef<SWidget>& _Widget) { this->Widget = _Widget; return AsShared(); }
 	
 	virtual void Register(FMenuBuilder& MenuBuilder) override
 	{

@@ -19,13 +19,14 @@ public:
 		:	Name(Name), FriendlyName(FriendlyName == NAME_None ? Name: FriendlyName),
 			Tips(Tips), Hook(Hook), Type(Type), Chord(Chord),
 			LoctextNamespace(LoctextNamespace), Icon(Icon), ExecuteAction(ExecuteAction),
-			UniqueId(UniqueId != NAME_None ? UniqueId: FEditorPlusUtils::GenUniqueId(Name))
+			UniqueId(UniqueId != NAME_None ? UniqueId: Name)
 	{}
 
 	void Register(FBindingContext* Context);
 	void Unregister(FBindingContext* Context);
 	void MapAction(TSharedRef<FUICommandList> CommandList);
 	void UnmapAction(TSharedRef<FUICommandList> CommandList);
+	void SetUniqueId(const FName& InUniqueId) { UniqueId = InUniqueId; }
 	
 	TSharedPtr<FUICommandInfo> Info;
 	const FName Name;
@@ -37,7 +38,7 @@ public:
 	const FName LoctextNamespace;
 	const FSlateIcon Icon;
 	const FExecuteAction ExecuteAction;
-	const FName UniqueId;
+	FName UniqueId;
 };
 
 

@@ -9,11 +9,10 @@ public:
 	virtual void OnStartup() override;
 	virtual void OnShutdown() override;
 private:
-	void BuildMenu();
-	void BuildSubMenu();
 	void BuildPathMenu();
-	void RegisterConsoleCommand();
-	FReply OnClickButton();
+	void BuildCustomMenu();
+	void BuildMixMenu();
+	FReply OnClickButton() const;
 	void RegisterPathSuccess(const FString& Path);
 	
 	TArray<TSharedPtr<FEditorPlusMenuBase>> Menus;
