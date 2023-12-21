@@ -13,7 +13,7 @@ private:
 	void BuildCustomMenu();
 	void BuildMixMenu();
 	FReply OnClickButton() const;
-	void RegisterPathSuccess(const FString& Path);
+	void RegisterPath(const FString& Path, const bool ShouldSuccess=true);
 	
 	TArray<TSharedPtr<FEditorPlusMenuBase>> Menus;
 	TSharedPtr<SEditableTextBox> InputText;

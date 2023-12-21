@@ -29,7 +29,7 @@ protected:
 
 	TSharedPtr<FEditorPlusHook> MakeRoot(const FString& PathName);	
 	TSharedPtr<FEditorPlusMenuBase> MakeNode(
-		const TSharedRef<FEditorPlusMenuBase>& Parent, const FString& PathName, const TSharedPtr<FEditorPlusMenuBase>& Node=nullptr);
+		const TSharedRef<FEditorPlusMenuBase>& Parent, const FString& PathName, bool IsLeaf, const TSharedPtr<FEditorPlusMenuBase>& Node=nullptr);
 
 	bool RemoveNode(
 		const TSharedRef<FEditorPlusMenuBase>& Parent, const TArray<FString>& Paths,

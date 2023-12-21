@@ -45,7 +45,7 @@ public:
 	
 	virtual bool IsEmpty() const { return Children.IsEmpty(); }
 
-	virtual bool AllowChild() const { return true; }
+	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const = 0;
 
 	virtual bool HasChild(const TSharedRef<FEditorPlusMenuBase>& Child) const
 	{
@@ -58,9 +58,9 @@ public:
 	
 	virtual bool AddChild(const TSharedRef<FEditorPlusMenuBase>& Child)
 	{
-		if(!AllowChild())
+		if(!AllowChild(Child))
 		{
-			UE_LOG(LogEditorPlus, Error, TEXT("Menu [%s] not allow child."), *GetName().ToString());
+			UE_LOG(LogEditorPlus, Error, TEXT("Menu [%s] not allow child [%s]."), ToCStr(GetPathName()), ToCStr(Child->GetPathName()));
 			return false;
 		}
 		if(HasChild(Child)) return true;
@@ -85,11 +85,6 @@ public:
 
 	virtual bool AddChildren(const TArray<TSharedRef<FEditorPlusMenuBase>>& Menus)
 	{
-		if(!AllowChild())
-		{
-			UE_LOG(LogEditorPlus, Error, TEXT("Menu [%s] not allow children."), *GetName().ToString());
-			return false;
-		}
 		for(const auto Child: Menus)
 		{
 			AddChild(Child);
@@ -391,7 +386,7 @@ public:
 	{
 		return Role == EEditorPlusMenuRole(EEditorPlusMenuRole::Leaf);
 	}
-	
+
 private:
 	using TEditorPlusMenuBase<Derived>::Content;
 	using TEditorPlusMenuBase<Derived>::ClearContent;
@@ -428,6 +423,15 @@ public:
 		}
 		return AsShared();
 	}
+
+	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override
+	{
+		const auto Type = Child->GetType();
+		return Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::None)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuTool)
+		;
+	}
 };
 
 
@@ -452,7 +456,16 @@ public:
 	{
 		return AddMenuBarExtension(ExtensionHook, Position);
 	}
-	
+
+	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override
+	{
+		const auto Type = Child->GetType();
+		return Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::None)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuTool)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuBar)
+		;
+	}
 protected:
 	virtual void OnMenuExtension(FMenuBuilder& MenuBuilder) override;
 };
@@ -477,6 +490,17 @@ public:
 	{
 		return AddMenuExtension(ExtensionHook, Position);
 	}
+
+	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override
+	{
+		const auto Type = Child->GetType();
+		return Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::None)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuTool)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuBar)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Section)
+		;
+	}
 };
 
 
@@ -497,6 +521,16 @@ public:
 	virtual TSharedRef<FEditorPlusMenuBase> AddExtension(const FName& ExtensionHook, const EExtensionHook::Position Position) override
 	{
 		return AddMenuExtension(ExtensionHook, Position);
+	}
+	
+	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override
+	{
+		const auto Type = Child->GetType();
+		return Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::None)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuTool)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuBar)
+		;
 	}
 };
 
@@ -519,6 +553,16 @@ public:
 	virtual TSharedRef<FEditorPlusMenuBase> AddExtension(const FName& ExtensionHook, const EExtensionHook::Position Position) override
 	{
 		return AddMenuExtension(ExtensionHook, Position);
+	}
+
+	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override
+	{
+		const auto Type = Child->GetType();
+		return Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::None)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuTool)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuBar)
+		;
 	}
 protected:
 	void MakeSubMenu(FMenuBuilder& MenuBuilder);
@@ -565,6 +609,8 @@ public:
 	}
 
 	virtual void SetParentPath(const FString& ParentPath) override;
+
+	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override { return false; }
 protected:
 	
 	TSharedPtr<FEditorPlusCommandInfo> CommandInfo;
@@ -597,7 +643,8 @@ public:
 	{
 		return AddMenuExtension(ExtensionHook, Position);
 	}
-	
+
+	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override { return false; }
 protected:
 	TSharedPtr<SWidget> Widget;
 };
@@ -624,6 +671,7 @@ public:
 	virtual EEditorPlusMenuType GetType() const override { return StaticType(); }
 	static EEditorPlusMenuType StaticType() { return EEditorPlusMenuType::MenuTool; }
 
+	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override { return false; }
 protected:
 	TSharedRef<IEditorPlusToolInterface> Tool;
 };

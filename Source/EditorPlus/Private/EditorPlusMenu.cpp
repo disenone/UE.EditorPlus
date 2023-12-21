@@ -21,7 +21,8 @@ void FEditorPlusMenuBase::Destroy(const bool UnregisterPath)
 	FEditorPlusMenuBase::Unregister();
 	if (Children.Num())
 	{
-		for (const auto Menu: Children)
+		// need to copy, because Children will be deleted in loop
+		for (const auto Menu: TArray(Children))
 		{
 			Menu->Destroy(UnregisterPath);
 		}

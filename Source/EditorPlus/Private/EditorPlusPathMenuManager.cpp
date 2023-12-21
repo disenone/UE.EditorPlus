@@ -87,7 +87,7 @@ TSharedPtr<FEditorPlusHook> FEditorPlusPathMenuManager::MakeRoot(const FString& 
 
 
 TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::MakeNode(
-	const TSharedRef<FEditorPlusMenuBase>& Parent, const FString& PathName, const TSharedPtr<FEditorPlusMenuBase>& Node)
+	const TSharedRef<FEditorPlusMenuBase>& Parent, const FString& PathName, bool IsLeaf, const TSharedPtr<FEditorPlusMenuBase>& Node)
 {
 	if(Node.IsValid())
 	{
@@ -100,7 +100,7 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::MakeNode(
 			return nullptr;
 		}
 		
-		Parent->AddChild(Node.ToSharedRef());
+		if(!Parent->AddChild(Node.ToSharedRef())) return nullptr;
 		return Node;	
 	}
 	
@@ -111,8 +111,17 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::MakeNode(
 		const TSharedPtr<FEditorPlusMenuBase> NewNode = FEditorPlusMenuBase::CreateByPathName(PathName);
 		if(!NewNode.IsValid()) return nullptr;
 
-		Parent->AddChild(NewNode.ToSharedRef());
+		const auto Role = EEditorPlusMenuRole::_from_integral(IsLeaf ? EEditorPlusMenuRole::Leaf : EEditorPlusMenuRole::Node);
 		
+		if(!NewNode->AllowRole(Role))
+		{
+			UE_LOG(
+				LogEditorPlus, Error, TEXT("Role not allow: [%s] can not be [%s]"),
+				ToCStr(PathName), StringCast<TCHAR>(Role._to_string()).Get());
+			return nullptr;
+		}
+
+		if(!Parent->AddChild(NewNode.ToSharedRef())) return nullptr;
 		return NewNode;
 	}
 	
@@ -123,7 +132,14 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::MakeNode(
 TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::DoRegister(
 	const TArray<FString>& NormalizedPathNames, const TSharedPtr<FEditorPlusMenuBase>& Node)
 {
-
+	if (NormalizedPathNames.Num() < 2)
+	{
+		UE_LOG(
+			LogEditorPlus, Error, TEXT("Invalid Path: [%s]"),
+			ToCStr(FEditorPlusUtils::GetPathDelimiter() + FString::Join(NormalizedPathNames, ToCStr(FEditorPlusUtils::GetPathDelimiter()))));
+		return nullptr;	
+	}
+	
 	// Root
 	const TSharedPtr<FEditorPlusHook> Root = MakeRoot(NormalizedPathNames[0]);
 	if(!Root.IsValid()) return nullptr;
@@ -133,12 +149,12 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::DoRegister(
 	// Build Node
 	for (int i = 1; i < NormalizedPathNames.Num() - 1; ++i)
 	{
-		Parent = MakeNode(Parent.ToSharedRef(), NormalizedPathNames[i]);
+		Parent = MakeNode(Parent.ToSharedRef(), NormalizedPathNames[i], false);
 		if(!Parent.IsValid()) return nullptr;
 	}
 
 	// Build Last Node
-	auto Ret = MakeNode(Parent.ToSharedRef(), NormalizedPathNames[NormalizedPathNames.Num() - 1], Node);
+	auto Ret = MakeNode(Parent.ToSharedRef(), NormalizedPathNames[NormalizedPathNames.Num() - 1], true, Node);
 
 	// Register to LevelEditor
 	Root->AddExtension();

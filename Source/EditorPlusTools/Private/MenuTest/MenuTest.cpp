@@ -32,28 +32,37 @@ void FMenuTest::OnShutdown()
 	Menus.Empty();
 }
 
-
-void FMenuTest::RegisterPathSuccess(const FString& Path)
+auto CreateClickLambda(const FString& Msg)
 {
-	const TSharedPtr<FEditorPlusMenuBase> Ret =
-		FEditorPlusPath::RegisterPathAction(Path, FExecuteAction::CreateLambda([Path]
+	return FExecuteAction::CreateLambda([Msg]
 		{
-			UE_LOG(LogMenuTest, Display, TEXT("Click [%s]"), ToCStr(Path));
-		}));
-	checkf(Ret.IsValid(), TEXT("failed to register [%s]"), ToCStr(Path))
+			UE_LOG(LogMenuTest, Display, TEXT("Click [%s]"), ToCStr(Msg));
+		});
+}
+
+void FMenuTest::RegisterPath(const FString& Path, const bool ShouldSuccess)
+{
+	const TSharedPtr<FEditorPlusMenuBase> Ret = FEditorPlusPath::RegisterPathAction(Path, CreateClickLambda(Path));
+	checkf(
+		ShouldSuccess == Ret.IsValid(),
+		TEXT("RegisterPath [%s] should be [%s], got [%s]"),
+		ToCStr(Path),
+		ShouldSuccess? "Success" : "Failed",
+		Ret.IsValid() ? "Success" : "Failed");
 	Menus.Push(Ret);	
 }
 
 
 void FMenuTest::BuildPathMenu()
 {
-	RegisterPathSuccess("/MenuTest/SubMenu1/SubMenu1/Path1");
-	RegisterPathSuccess("/MenuTest/SubMenu1/SubMenu1/Path2");
-	RegisterPathSuccess("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1/Path3");
-	RegisterPathSuccess("MenuTest/<SubMenu>SubMenu1/<Section>Section1/Path4");
-	RegisterPathSuccess("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1/<Separator>Separator1/Path5");
-	RegisterPathSuccess("<Hook>Separator1/Path6");
-	RegisterPathSuccess("<Hook>Section1/Path7");
+	RegisterPath("/MenuTest/SubMenu1/SubMenu1/Path1");
+	RegisterPath("/MenuTest/SubMenu1/SubMenu1/Path2");
+	RegisterPath("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1/Path3");
+	RegisterPath("MenuTest/<SubMenu>SubMenu1/<Section>Section1/Path4");
+	RegisterPath("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1/<Separator>Separator1/Path5");
+	RegisterPath("<Hook>Separator1/Path6");
+	RegisterPath("<Hook>Section1/Path7");
+	RegisterPath("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1/<Section>Section2/ShouldFail", false);
 }
 
 
@@ -78,18 +87,10 @@ void FMenuTest::BuildCustomMenu()
 			NEW_EP_MENU(FEditorPlusSection)("CustomSection1")
 			->Content({
 				NEW_EP_MENU(FEditorPlusCommand)("Command1")
-				->BindAction(
-					FExecuteAction::CreateLambda([]
-					{
-						UE_LOG(LogMenuTest, Display, TEXT("clicked Command1"));
-					})),
+				->BindAction(CreateClickLambda("Custom Command1")),
 				
 				NEW_EP_MENU(FEditorPlusCommand)("Command2")
-				->BindAction(
-					FExecuteAction::CreateLambda([]
-					{
-						UE_LOG(LogMenuTest, Display, TEXT("clicked Command2"));
-					})),
+				->BindAction(CreateClickLambda("Custom Command2")),
 			}),
 
 			NEW_EP_MENU(FEditorPlusSeparator)("Separator1"),
@@ -97,26 +98,15 @@ void FMenuTest::BuildCustomMenu()
 			NEW_EP_MENU(FEditorPlusSubMenu)("SubMenu1")
 			->Content({
 				NEW_EP_MENU(FEditorPlusCommand)("Command3")
-				->BindAction(
-					FExecuteAction::CreateLambda([]
-					{
-						UE_LOG(LogMenuTest, Display, TEXT("clicked Command3"));
-					})),
+				->BindAction(CreateClickLambda("Custom Command3")),
 				
 				NEW_EP_MENU(FEditorPlusCommand)("Command4")
-				->BindAction(
-					FExecuteAction::CreateLambda([]
-					{
-						UE_LOG(LogMenuTest, Display, TEXT("clicked Command4"));
-					})),
+				->BindAction(CreateClickLambda("Custom Command4")),
 				
 				NEW_EP_MENU(FEditorPlusCommand)("Command5")
 				->BindAction(
 					FMenuTestCommands::Get(),
-					FExecuteAction::CreateLambda([]
-					{
-						UE_LOG(LogMenuTest, Display, TEXT("clicked Command5"));
-					})),
+					CreateClickLambda("Custom Command5")),
 				
 				NEW_EP_MENU(FEditorPlusWidget)("Widget1")
 				->BindWidget(
@@ -126,14 +116,14 @@ void FMenuTest::BuildCustomMenu()
 					 [
 						 SAssignNew(InputText, SEditableTextBox)
 						 .MinDesiredWidth(50)
-						 .Text(FText::FromName("FMenuTest"))
+						 .Text(FText::FromName("Widget"))
 					 ]
 					 + SHorizontalBox::Slot()
 					 .AutoWidth()
 					 .Padding(5, 0, 0, 0)
 					 [
 						 SNew(SButton)
-						 .Text(FText::FromName("FMenuTest"))
+						 .Text(FText::FromName("Widget"))
 						 .OnClicked(FOnClicked::CreateSP(this, &FMenuTest::OnClickButton))
 					 ]
 					),
@@ -141,36 +131,43 @@ void FMenuTest::BuildCustomMenu()
 				NEW_EP_MENU(FEditorPlusCommand)("Command6")
 				->BindAction(
 					FMenuTestCommands::Get(),
-					FExecuteAction::CreateLambda([]
-					{
-						UE_LOG(LogMenuTest, Display, TEXT("clicked Command6"));
-					})),
+					CreateClickLambda("Custom Command6")),
 			})
 	}));
 
 }
 
 
-
 void FMenuTest::BuildMixMenu()
 {
-	// if (!SubMenu.IsValid())
-	// {
-	// 	SubMenu = 
-	// 	NEW_ED_MENU(FEditorPlusSubMenu)("MenuTestSub", "Open the MenuTest Menu")
-	// 	->AddMenuExtension(TEXT("Miscellaneous"), EExtensionHook::After, "MenuTestSub")
-	// 	->Content
-	// 	({
-	// 		NEW_ED_MENU(FEditorPlusMenu)(
-	// 			FMenuTestCommands::Get(),
-	// 			"Command7",
-	// 			"Command7",
-	// 			"Command7 tips",
-	// 			FExecuteAction::CreateLambda([]
-	// 			{
-	// 				UE_LOG(LogMenuTest, Display, TEXT("clicked Command7"));
-	// 			})),	
-	// 	})
-	// 	;
-	// }	
+	Menus.Push(FEditorPlusPath::RegisterPath(
+		"MenuTest/<SubMenu>SubMenu1/<Section>MixSection1",
+		NEW_EP_MENU(FEditorPlusSection)("CustomSection1", "CustomSection1", "CustomSection1")
+		->Content({
+			NEW_EP_MENU(FEditorPlusCommand)("MixPath1")
+			->BindAction(CreateClickLambda("MixPath1")),
+					
+			NEW_EP_MENU(FEditorPlusWidget)("Widget1")
+			->BindWidget(
+				SNew(SHorizontalBox)
+				 + SHorizontalBox::Slot()
+				 .AutoWidth()
+				 [
+					 SAssignNew(InputText, SEditableTextBox)
+					 .MinDesiredWidth(50)
+					 .Text(FText::FromName("MixWidget"))
+				 ]
+				 + SHorizontalBox::Slot()
+				 .AutoWidth()
+				 .Padding(5, 0, 0, 0)
+				 [
+					 SNew(SButton)
+					 .Text(FText::FromName("MixWidget"))
+					 .OnClicked(FOnClicked::CreateSP(this, &FMenuTest::OnClickButton))
+				 ]
+				)
+		})	
+	));
+
+	RegisterPath("<Hook>CustomSection1/MixPath2");
 }
