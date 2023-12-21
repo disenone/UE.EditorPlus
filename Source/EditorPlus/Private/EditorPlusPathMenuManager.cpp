@@ -149,6 +149,7 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::DoRegister(
 
 TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::RegisterPath(const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Menu)
 {
+	checkf(!Menu->IsDestroyed(), TEXT("Menu is alreasy destroyed, can not register again."));
 	return DoRegister(Path, Menu);	
 }
 

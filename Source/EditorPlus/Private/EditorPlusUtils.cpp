@@ -39,9 +39,3 @@ FName FEditorPlusUtils::PathJoin(const FName& Left, const FName& Right, const FS
 {
 	return FName(Left.ToString() + InDelimiter + Right.ToString());
 }
-
-FName FEditorPlusUtils::GenUniqueId(const FName& Name)
-{
-	static uint32 Id = 0;
-	return FName(Name.ToString() + FString::FromInt(Id++));
-}

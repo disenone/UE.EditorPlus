@@ -15,20 +15,21 @@ FEditorPlusMenuBase::~FEditorPlusMenuBase()
 }
 
 
-void FEditorPlusMenuBase::Destroy()
+void FEditorPlusMenuBase::Destroy(const bool UnregisterPath)
 {
+	if(IsDestroyed()) return;
 	FEditorPlusMenuBase::Unregister();
 	if (Children.Num())
 	{
 		for (const auto Menu: Children)
 		{
-			Menu->Destroy();
+			Menu->Destroy(UnregisterPath);
 		}
 	}
 	Children.Empty();
-	if (!Path.IsEmpty())
+	if (UnregisterPath && !Path.IsEmpty())
 	{
-		FEditorPlusMenuManager::UnregisterPath(Path, UniqueId);
+		FEditorPlusMenuManager::UnregisterPath(Path, GetUniqueId());
 	}
 }
 
@@ -68,7 +69,7 @@ void FEditorPlusMenuBase::DoAddMenuExtension(const FName& ExtensionHook, const E
 		ExtensionHook, Position,
 		nullptr,
 		FEditorPlusMenuManager::RegisterDelegate(
-			UniqueId,
+			GetUniqueId(),
 			FMenuExtensionDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuExtension))
 	);
 	
@@ -87,7 +88,7 @@ void FEditorPlusMenuBase::OnMenuModuleChanged(FName ModuleThatChanged, EModuleCh
 {
 	if (ModuleThatChanged == FEditorPlusModule::GetName() && ReasonForChange == EModuleChangeReason::ModuleLoaded)
 	{
-		FEditorPlusMenuManager::UpdateDelegate(UniqueId, FMenuExtensionDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuExtension));
+		FEditorPlusMenuManager::UpdateDelegate(GetUniqueId(), FMenuExtensionDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuExtension));
 	}		
 }
 
@@ -95,9 +96,9 @@ void FEditorPlusMenuBase::RemoveMenuExtension()
 {
 	if(MenuExtender.IsValid())
 	{
-		FEditorPlusMenuManager::RemoveDelegate<FMenuExtensionDelegate>(UniqueId);
-		FEditorPlusMenuManager::RemoveDelegate<FMenuBarExtensionDelegate>(UniqueId);
-		FEditorPlusMenuManager::UnregisterPath(ExtHook.ToString(), UniqueId);
+		FEditorPlusMenuManager::RemoveDelegate<FMenuExtensionDelegate>(GetUniqueId());
+		FEditorPlusMenuManager::RemoveDelegate<FMenuBarExtensionDelegate>(GetUniqueId());
+		FEditorPlusMenuManager::UnregisterPath(ExtHook.ToString(), GetUniqueId());
 		FEditorPlusUtils::GetLevelEditorModule().GetMenuExtensibilityManager()->RemoveExtender(MenuExtender);
 		MenuExtender.Reset();
 		if (ModuleChangedHandler.IsValid())
@@ -120,13 +121,13 @@ void FEditorPlusMenuBase::DoAddMenuBarExtension(const FName& ExtensionHook, cons
 		ExtensionHook, Position,
 		nullptr,
 		FEditorPlusMenuManager::RegisterDelegate(
-			UniqueId,
+			GetUniqueId(),
 			FMenuBarExtensionDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuBarExtension))
 	);
 	
 	FEditorPlusUtils::GetLevelEditorModule().GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 	
-	FEditorPlusMenuManager::RegisterDelegate(UniqueId, FNewMenuDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuExtension));
+	FEditorPlusMenuManager::RegisterDelegate(GetUniqueId(), FNewMenuDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuExtension));
 
 	ModuleChangedHandler = FModuleManager::Get().OnModulesChanged().AddSP(this, &FEditorPlusMenuBase::OnMenuBarModuleChanged);
 	
@@ -148,9 +149,9 @@ void FEditorPlusMenuBase::RemoveMenuBarExtension()
 	if (MenuExtender.IsValid())
 	{
 		FEditorPlusUtils::GetLevelEditorModule().GetMenuExtensibilityManager()->RemoveExtender(MenuExtender);
-		FEditorPlusMenuManager::RemoveDelegate<FMenuExtensionDelegate>(UniqueId);
-		FEditorPlusMenuManager::RemoveDelegate<FMenuBarExtensionDelegate>(UniqueId);
-		FEditorPlusMenuManager::UnregisterPath(ExtHook.ToString(), UniqueId);
+		FEditorPlusMenuManager::RemoveDelegate<FMenuExtensionDelegate>(GetUniqueId());
+		FEditorPlusMenuManager::RemoveDelegate<FMenuBarExtensionDelegate>(GetUniqueId());
+		FEditorPlusMenuManager::UnregisterPath(ExtHook.ToString(), GetUniqueId());
 		MenuExtender.Reset();
 		if (ModuleChangedHandler.IsValid())
 		{
@@ -204,7 +205,7 @@ void FEditorPlusMenuBar::Register(FMenuBarBuilder& MenuBarBuilder)
 	MenuBarBuilder.AddPullDownMenu(
 	FText::FromName(Name),
 	FText::FromName(Tips),
-	FEditorPlusMenuManager::GetDelegate<FNewMenuDelegate>(UniqueId),
+	FEditorPlusMenuManager::GetDelegate<FNewMenuDelegate>(GetUniqueId()),
 	Hook);
 }
 

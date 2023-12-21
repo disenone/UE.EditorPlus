@@ -32,13 +32,14 @@ class EDITORPLUS_API FEditorPlusMenuBase: public TSharedFromThis<FEditorPlusMenu
 {
 public:
 	explicit FEditorPlusMenuBase(const FName& Name, const FName& Tips = NAME_None, const FName& Hook = NAME_None)
-		:Name(Name), UniqueId(FEditorPlusUtils::GenUniqueId(Name)), Tips(Tips), Hook(Hook)
+		:Name(Name), Tips(Tips), Hook(Hook)
 	{
 		if(Tips == NAME_None) this->Tips = Name;
 	}
 	
 	virtual ~FEditorPlusMenuBase();
-	virtual void Destroy();
+	virtual void Destroy(const bool UnregisterPath=true);
+	bool IsDestroyed() const { return Destroyed; }
 	
 	virtual TArray<TSharedRef<FEditorPlusMenuBase>>::SizeType ChildrenNum() const { return Children.Num(); }
 	
@@ -50,6 +51,10 @@ public:
 	{
 		return Children.Contains(Child);	
 	}
+	virtual bool HasChild(const FName& ChildUniqueId) const
+	{
+		return !GetChildrenByUniqueId(ChildUniqueId).IsEmpty();
+	}
 	
 	virtual bool AddChild(const TSharedRef<FEditorPlusMenuBase>& Child)
 	{
@@ -59,9 +64,22 @@ public:
 			return false;
 		}
 		if(HasChild(Child)) return true;
-		
-		Children.Emplace(Child);
+
 		Child->SetParentPath(Path);
+
+		TArray<TSharedRef<FEditorPlusMenuBase>> OldChildren;
+		// replace same uniqueId
+		if(HasChild(Child->GetUniqueId()))
+		{
+			OldChildren.Append(GetChildrenByUniqueId(Child->GetUniqueId()));
+		}
+				
+		Children.Emplace(Child);
+		for(auto OldChild: OldChildren)
+		{
+			OldChild->Destroy();
+			RemoveChild(OldChild);
+		}	
 		return true;
 	}
 
@@ -106,7 +124,7 @@ public:
 	virtual void ClearChildren() { Children.Empty(); }
 
 	TArray<TSharedRef<FEditorPlusMenuBase>> GetChildrenByName(
-		const FName& ChildName, const EEditorPlusMenuType Type = EEditorPlusMenuType::None)
+		const FName& ChildName, const EEditorPlusMenuType Type = EEditorPlusMenuType::None) const
 	{
 		TArray<TSharedRef<FEditorPlusMenuBase>> Ret;
 		for (auto Menu: Children)
@@ -120,7 +138,7 @@ public:
 	}
 	
 	template <class Derived>
-	TArray<TSharedRef<Derived>> GetChildrenByName(const FName& Name)
+	TArray<TSharedRef<Derived>> GetChildrenByName(const FName& Name) const
 	{
 		TArray<TSharedRef<FEditorPlusMenuBase>> BaseRet = GetChildrenByName(Name, Derived::StaticType());
 		TArray<TSharedRef<Derived>>	Ret;
@@ -132,7 +150,7 @@ public:
 		return Ret;
 	}
 
-	TArray<TSharedRef<FEditorPlusMenuBase>> GetChildrenByType(const EEditorPlusMenuType Type)
+	TArray<TSharedRef<FEditorPlusMenuBase>> GetChildrenByType(const EEditorPlusMenuType Type) const
 	{
 		TArray<TSharedRef<FEditorPlusMenuBase>> Ret;
 		for (auto Menu: Children)
@@ -146,7 +164,7 @@ public:
 	}
 	
 	template <class Derived>
-	TArray<TSharedRef<Derived>> GetChildrenByType()
+	TArray<TSharedRef<Derived>> GetChildrenByType() const
 	{
 		TArray<TSharedRef<FEditorPlusMenuBase>> BaseRet = GetChildrenByType(Derived::StaticType());
 		TArray<TSharedRef<Derived>>	Ret;
@@ -158,7 +176,7 @@ public:
 		return Ret;
 	}
 
-	TArray<TSharedRef<FEditorPlusMenuBase>>	GetChildrenByPathName(const FString& PathName)
+	TArray<TSharedRef<FEditorPlusMenuBase>>	GetChildrenByPathName(const FString& PathName) const
 	{
 		TArray<TSharedRef<FEditorPlusMenuBase>>	Ret;
 		for(auto Menu: Children)
@@ -170,6 +188,19 @@ public:
 		}
 		return Ret;	
 	}
+
+	TArray<TSharedRef<FEditorPlusMenuBase>>	GetChildrenByUniqueId(const FName& UniqueId) const
+	{
+		TArray<TSharedRef<FEditorPlusMenuBase>>	Ret;
+		for(auto Menu: Children)
+		{
+			if(Menu->GetUniqueId() == UniqueId)
+			{
+				Ret.Push(Menu);
+			}
+		}
+		return Ret;	
+	}	
 	
 	virtual TSharedRef<FEditorPlusMenuBase> Content(const TArray<TSharedRef<FEditorPlusMenuBase>>& Menus)
 	{
@@ -192,7 +223,7 @@ public:
 	virtual void Unregister();
 	
 	virtual FName GetName() const { return Name; }
-	virtual FName GetUniqueId() const { return UniqueId; }
+	virtual FName GetUniqueId() const { return FName(Path); }
 	virtual FName GetTips() const { return Tips; }
 	virtual FName GetHook() const { return Hook; }
 	virtual FName GetExtHook() const { return ExtHook; }
@@ -251,6 +282,7 @@ public:
 	}
 
 	static TSharedPtr<FEditorPlusMenuBase> CreateByPathName(const FString& PathName);
+
 protected:
 	
 	virtual void RemoveMenuExtension();
@@ -284,9 +316,6 @@ protected:
 	// my name, will show in menu
 	FName Name = "";
 
-	// unique id to register delegate
-	const FName UniqueId;
-
 	// tips for menu
 	FName Tips = "";
 	
@@ -298,6 +327,9 @@ protected:
 
 	// Path to me
 	FString Path;
+
+	// is destroyed
+	bool Destroyed = false;
 	
 	// my extender to hook other menu
 	TSharedPtr<FExtender> MenuExtender;
