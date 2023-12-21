@@ -61,10 +61,10 @@ public:
 		if(HasChild(Child)) return true;
 		
 		Children.Emplace(Child);
+		Child->SetParentPath(Path);
 		return true;
 	}
 
-	
 	virtual bool AddChildren(const TArray<TSharedRef<FEditorPlusMenuBase>>& Menus)
 	{
 		if(!AllowChild())
@@ -229,7 +229,18 @@ public:
 		}
 		return TTuple<EEditorPlusMenuType, FString>(EEditorPlusMenuType::None, PathName);
 	}
-
+	void SetParentPath(const FString& ParentPath)
+	{
+		Path = ParentPath / GetPathName();
+		if (!Children.IsEmpty())
+		{
+			for(const auto Child: Children)
+			{
+				Child->SetParentPath(Path);
+			}
+		}
+	}
+	
 	virtual bool AllowRole(const EEditorPlusMenuRole Role) const { return false; }
 	
 	virtual bool HasMenuExtender() const { return MenuExtender.IsValid(); }
@@ -284,6 +295,9 @@ protected:
 
 	// hook to extend other menu
 	FName ExtHook = NAME_None;
+
+	// Path to me
+	FString Path;
 	
 	// my extender to hook other menu
 	TSharedPtr<FExtender> MenuExtender;
@@ -361,7 +375,10 @@ class EDITORPLUS_API FEditorPlusHook: public TEditorPlusMenuBaseRoot<FEditorPlus
 public:
 	using FBaseType = TEditorPlusMenuBaseRoot<FEditorPlusHook>;
 	
-	explicit FEditorPlusHook(const FName& Name): FBaseType(Name, Name, Name) {}
+	explicit FEditorPlusHook(const FName& Name): FBaseType(Name, Name, Name)
+	{
+		Path = "/" + FEditorPlusHook::GetPathName();
+	}
 
 	virtual EEditorPlusMenuType GetType() const override { return StaticType(); }
 	static EEditorPlusMenuType StaticType() { return EEditorPlusMenuType::Hook; }

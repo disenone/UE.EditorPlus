@@ -28,7 +28,7 @@ void FMenuTest::OnShutdown()
 {
 	for(auto Menu: Menus)
 	{
-		if(Menu.IsValid()) Menu->Unregister();
+		if(Menu.IsValid()) Menu->Destroy();
 	}
 	Menus.Empty();
 }

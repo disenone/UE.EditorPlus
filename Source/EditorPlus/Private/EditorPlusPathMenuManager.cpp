@@ -95,8 +95,8 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::MakeNode(
 		if(TypeAneName.Get<0>()._to_integral() != Node->GetType())
 		{
 			UE_LOG(
-				LogEditorPlus, Error, TEXT("PathName dose not match Node Type, PathName Type: [%s], Node Type: [%s]"),
-				StringCast<TCHAR>(TypeAneName.Get<0>()._to_string()).Get(), StringCast<TCHAR>(Node->GetType()._to_string()).Get());
+				LogEditorPlus, Error, TEXT("PathName dose not match Node Type, PathName: [%s], Node Type: [%s]"),
+				ToCStr(PathName), StringCast<TCHAR>(Node->GetType()._to_string()).Get());
 			return nullptr;
 		}
 		
@@ -198,6 +198,7 @@ bool FEditorPlusPathMenuManager::RemoveNode(
 		{
 			if(Child->IsEmpty())
 			{
+				Child->Destroy();
 				Parent->RemoveChild(Child);
 			}
 			return true;
@@ -228,6 +229,7 @@ bool FEditorPlusPathMenuManager::RemoveNode(
 		{
 			if(Child->IsEmpty())
 			{
+				Child->Unregister();
 				Parent->RemoveChild(Child);
 			}
 			return true;
@@ -250,6 +252,7 @@ bool FEditorPlusPathMenuManager::Unregister(const FString& Path, const TSharedPt
 	{
 		if(RootMap[RootName]->IsEmpty())
 		{
+			RootMap[RootName]->Destroy();
 			RootMap.Remove(RootName);
 		}
 		return true;
@@ -269,8 +272,9 @@ bool FEditorPlusPathMenuManager::Unregister(const FString& Path, const FName& Un
 
 	if(RemoveNode(RootMap[RootName], PathNames, 0, UniqueId))
 	{
-		if(RootMap[RootName]->IsEmpty())
+		if(RootMap.Contains(RootName) && RootMap[RootName]->IsEmpty())
 		{
+			RootMap[RootName]->Unregister();	
 			RootMap.Remove(RootName);
 		}
 		return true;

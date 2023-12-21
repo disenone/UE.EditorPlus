@@ -11,21 +11,31 @@
 
 FEditorPlusMenuBase::~FEditorPlusMenuBase()
 {
-	FEditorPlusMenuBase::Unregister();
-	FEditorPlusMenuBase::RemoveMenuExtension();	
+	FEditorPlusMenuBase::Destroy();
 }
 
 
 void FEditorPlusMenuBase::Destroy()
 {
-	Unregister();
-	RemoveMenuExtension();	
+	FEditorPlusMenuBase::Unregister();
+	if (Children.Num())
+	{
+		for (const auto Menu: Children)
+		{
+			Menu->Destroy();
+		}
+	}
+	Children.Empty();
+	if (!Path.IsEmpty())
+	{
+		FEditorPlusMenuManager::UnregisterPath(Path, UniqueId);
+	}
 }
 
 
 void FEditorPlusMenuBase::Register(FMenuBuilder& MenuBuilder)
 {
-	for (auto Menu: Children)
+	for (const auto Menu: Children)
 	{
 		Menu->Register(MenuBuilder);
 	}
@@ -40,8 +50,8 @@ void FEditorPlusMenuBase::Unregister()
 		{
 			Menu->Unregister();
 		}
-		Children.Empty();	
 	}
+	FEditorPlusMenuBase::RemoveMenuExtension();
 }
 
 
@@ -65,7 +75,7 @@ void FEditorPlusMenuBase::DoAddMenuExtension(const FName& ExtensionHook, const E
 	FEditorPlusUtils::GetLevelEditorModule().GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 	ModuleChangedHandler = FModuleManager::Get().OnModulesChanged().AddSP(this, &FEditorPlusMenuBase::OnMenuModuleChanged);
 
-	FEditorPlusMenuManager::RegisterPath(ExtensionHook.ToString(), AsShared());
+	FEditorPlusMenuManager::RegisterPath(Path, AsShared());
 }
 
 void FEditorPlusMenuBase::OnMenuExtension(FMenuBuilder& MenuBuilder)
@@ -120,7 +130,7 @@ void FEditorPlusMenuBase::DoAddMenuBarExtension(const FName& ExtensionHook, cons
 
 	ModuleChangedHandler = FModuleManager::Get().OnModulesChanged().AddSP(this, &FEditorPlusMenuBase::OnMenuBarModuleChanged);
 	
-	FEditorPlusMenuManager::RegisterPath(ExtensionHook.ToString(), AsShared());
+	FEditorPlusMenuManager::RegisterPath(Path, AsShared());
 }
 
 void FEditorPlusMenuBase::OnMenuBarExtension(FMenuBarBuilder& MenuBarBuilder)
