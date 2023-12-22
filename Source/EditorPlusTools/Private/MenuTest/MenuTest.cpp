@@ -21,6 +21,7 @@ void FMenuTest::OnStartup()
 	BuildPathMenu();
 	BuildCustomMenu();
 	BuildMixMenu();
+	BuildExtendMenu();
 }
 
 void FMenuTest::OnShutdown()
@@ -147,7 +148,7 @@ void FMenuTest::BuildMixMenu()
 			NEW_EP_MENU(FEditorPlusCommand)("MixPath1")
 			->BindAction(CreateClickLambda("MixPath1")),
 					
-			NEW_EP_MENU(FEditorPlusWidget)("Widget1")
+			NEW_EP_MENU(FEditorPlusWidget)("MixWidget")
 			->BindWidget(
 				SNew(SHorizontalBox)
 				 + SHorizontalBox::Slot()
@@ -170,4 +171,38 @@ void FMenuTest::BuildMixMenu()
 	));
 
 	RegisterPath("<Hook>CustomSection1/MixPath2");
+}
+
+void FMenuTest::BuildExtendMenu()
+{
+	Menus.Push(FEditorPlusPath::RegisterPath(
+		"<Hook>EpicGamesHelp/<Separator>ExtendSeparator",
+		NEW_EP_MENU(FEditorPlusSeparator)("ExtendSeparator")
+		->Content({
+			NEW_EP_MENU(FEditorPlusCommand)("ExtendPath1")
+			->BindAction(CreateClickLambda("ExtendPath1")),
+						
+			NEW_EP_MENU(FEditorPlusWidget)("ExtendWidget")
+			->BindWidget(
+				SNew(SHorizontalBox)
+				 + SHorizontalBox::Slot()
+				 .AutoWidth()
+				 [
+					 SAssignNew(InputText, SEditableTextBox)
+					 .MinDesiredWidth(50)
+					 .Text(FText::FromName("ExtendWidget"))
+				 ]
+				 + SHorizontalBox::Slot()
+				 .AutoWidth()
+				 .Padding(5, 0, 0, 0)
+				 [
+					 SNew(SButton)
+					 .Text(FText::FromName("ExtendWidget"))
+					 .OnClicked(FOnClicked::CreateSP(this, &FMenuTest::OnClickButton))
+				 ]
+				)
+		})	
+	));
+	
+	RegisterPath("<Hook>ExtendSeparator/ExtendPath2");
 }

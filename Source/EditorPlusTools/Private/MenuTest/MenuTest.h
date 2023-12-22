@@ -12,6 +12,7 @@ private:
 	void BuildPathMenu();
 	void BuildCustomMenu();
 	void BuildMixMenu();
+	void BuildExtendMenu();
 	FReply OnClickButton() const;
 	void RegisterPath(const FString& Path, const bool ShouldSuccess=true);
 	
