@@ -1,19 +1,13 @@
-﻿#include "..\Public\EditorPlusCommandInfo.h"
+﻿#include "EditorPlusCommandInfo.h"
 
 
 void FEditorPlusCommandInfo::Register(FBindingContext* Context)
 {
-	static const FString UICommandsStr(TEXT("UICommands"));
-	const FString Namespace = !LoctextNamespace.IsNone() ? UICommandsStr + TEXT(".") + Namespace : UICommandsStr;
-	
-	const FString NameString = Name.ToString();
 	FUICommandInfo::MakeCommandInfo(
 		Context->AsShared(),
 		Info, Name,
-		FInternationalization::ForUseOnlyByLocMacroAndGraphNodeTextLiterals_CreateText(
-			ToCStr(FriendlyName.ToString()), *Namespace, ToCStr(Name.ToString())),
-		FInternationalization::ForUseOnlyByLocMacroAndGraphNodeTextLiterals_CreateText(
-			ToCStr(Tips.ToString()), *Namespace, ToCStr(NameString + TEXT("_ToolTip"))),
+		Label,
+		Tips,
 		Icon, Type, Chord
 	);
 }

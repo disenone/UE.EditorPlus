@@ -87,7 +87,8 @@ TSharedPtr<FEditorPlusHook> FEditorPlusPathMenuManager::MakeRoot(const FString& 
 
 
 TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::MakeNode(
-	const TSharedRef<FEditorPlusMenuBase>& Parent, const FString& PathName, bool IsLeaf, const TSharedPtr<FEditorPlusMenuBase>& Node)
+	const TSharedRef<FEditorPlusMenuBase>& Parent, const FString& PathName, bool IsLeaf,
+	const TSharedPtr<FEditorPlusMenuBase>& Node, const FText& FriendlyName, const FText& FriendlyTips)
 {
 	if(Node.IsValid())
 	{
@@ -108,7 +109,7 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::MakeNode(
 
 	if (!Subs.Num())
 	{
-		const TSharedPtr<FEditorPlusMenuBase> NewNode = FEditorPlusMenuBase::CreateByPathName(PathName);
+		const TSharedPtr<FEditorPlusMenuBase> NewNode = FEditorPlusMenuBase::CreateByPathName(PathName, FriendlyName, FriendlyTips);
 		if(!NewNode.IsValid()) return nullptr;
 
 		const auto Role = EEditorPlusMenuRole::_from_integral(IsLeaf ? EEditorPlusMenuRole::Leaf : EEditorPlusMenuRole::Node);
@@ -130,7 +131,7 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::MakeNode(
 
 
 TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::DoRegister(
-	const TArray<FString>& NormalizedPathNames, const TSharedPtr<FEditorPlusMenuBase>& Node)
+	const TArray<FString>& NormalizedPathNames, const TSharedPtr<FEditorPlusMenuBase>& Node, const FText& FriendlyName, const FText& FriendlyTips)
 {
 	if (NormalizedPathNames.Num() < 2)
 	{
@@ -154,7 +155,8 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::DoRegister(
 	}
 
 	// Build Last Node
-	auto Ret = MakeNode(Parent.ToSharedRef(), NormalizedPathNames[NormalizedPathNames.Num() - 1], true, Node);
+	auto Ret = MakeNode(
+		Parent.ToSharedRef(), NormalizedPathNames[NormalizedPathNames.Num() - 1], true, Node, FriendlyName, FriendlyTips);
 
 	// Register to LevelEditor
 	Root->AddExtension();
@@ -169,8 +171,15 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::RegisterPath(const F
 	return DoRegister(Path, Menu);	
 }
 
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::RegisterPath(const FString& Path, const FText& FriendlyName, const FText& FriendlyTips)
+{
+	return DoRegister(Path, nullptr, FriendlyName, FriendlyTips);
+}
+
+
 TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::RegisterAction(
-	const FString& Path, const FExecuteAction& ExecuteAction, const FName& Hook)
+	const FString& Path, const FExecuteAction& ExecuteAction, const FName& Hook, const FText& FriendlyName, const FText& FriendlyTips)
 {
 	const auto NormalizedNames = NormalizeSplitPath(Path);
 
@@ -183,7 +192,7 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::RegisterAction(
 	}
 
 	const FName Name = FName(TypeAneName.Get<1>());
-	const auto Command = NEW_EP_MENU(FEditorPlusCommand)(Name, Name, Hook == "" ? Name : Hook)
+	const auto Command = NEW_EP_MENU(FEditorPlusCommand)(Name, Hook.IsNone() ? Name : Hook, FriendlyName, FriendlyTips)
 		->BindAction(ExecuteAction);
 	
 	return DoRegister(NormalizedNames, Command);

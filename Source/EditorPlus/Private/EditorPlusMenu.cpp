@@ -168,7 +168,7 @@ void FEditorPlusMenuBase::RemoveMenuBarExtension()
 	}	
 }
 
-TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuBase::CreateByPathName(const FString& PathName)
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuBase::CreateByPathName(const FString& PathName, const FText& FriendlyName, const FText& FriendlyTips)
 {
 	auto TypeAndName = FEditorPlusMenuBase::GetTypeAndNameByPathName(PathName);
 	const FName Name = FName(TypeAndName.Get<1>());
@@ -178,15 +178,15 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuBase::CreateByPathName(const FStr
 		case EEditorPlusMenuType::Hook:
 			return MakeShared<FEditorPlusHook>(Name);
 		case EEditorPlusMenuType::MenuBar:
-			return MakeShared<FEditorPlusMenuBar>(Name, Name, Name);
+			return MakeShared<FEditorPlusMenuBar>(Name, Name, FriendlyName, FriendlyTips);
 		case EEditorPlusMenuType::SubMenu:
-			return MakeShared<FEditorPlusSubMenu>(Name, Name, Name);
+			return MakeShared<FEditorPlusSubMenu>(Name, Name, FriendlyName, FriendlyTips);
 		case EEditorPlusMenuType::Section:
-			return MakeShared<FEditorPlusSection>(Name, Name, Name);
+			return MakeShared<FEditorPlusSection>(Name, Name, FriendlyName);
 		case EEditorPlusMenuType::Separator:
 			return MakeShared<FEditorPlusSeparator>(Name);
 		case EEditorPlusMenuType::Command:
-			return MakeShared<FEditorPlusCommand>(Name, Name, Name);
+			return MakeShared<FEditorPlusCommand>(Name, Name, FriendlyName, FriendlyTips);
 		default:
 			return nullptr;
 	}
@@ -210,10 +210,10 @@ FEditorPlusMenuBar::~FEditorPlusMenuBar()
 void FEditorPlusMenuBar::Register(FMenuBarBuilder& MenuBarBuilder)
 {
 	MenuBarBuilder.AddPullDownMenu(
-	FText::FromName(Name),
-	FText::FromName(Tips),
-	FEditorPlusMenuManager::GetDelegate<FNewMenuDelegate>(GetUniqueId()),
-	Hook);
+		GetFriendlyText(),
+		GetFriendlyTips(),
+		FEditorPlusMenuManager::GetDelegate<FNewMenuDelegate>(GetUniqueId()),
+		Hook);
 }
 
 
@@ -234,7 +234,7 @@ void FEditorPlusMenuBar::OnMenuExtension(FMenuBuilder& MenuBuilder)
 
 void FEditorPlusSection::Register(FMenuBuilder& MenuBuilder)
 {
-	MenuBuilder.BeginSection(Hook, FText::FromName(Name));
+	MenuBuilder.BeginSection(Hook, GetFriendlyText());
 	FEditorPlusMenuBase::Register(MenuBuilder);
 	MenuBuilder.EndSection();
 }
@@ -264,8 +264,8 @@ void FEditorPlusSeparator::Register(FMenuBuilder& MenuBuilder)
 void FEditorPlusSubMenu::Register(FMenuBuilder& MenuBuilder)
 {
 	MenuBuilder.AddSubMenu(
-		FText::FromName(Name),
-		FText::FromName(Tips),
+		GetFriendlyText(),
+		GetFriendlyTips(),
 		FNewMenuDelegate::CreateSP(this, &FEditorPlusSubMenu::MakeSubMenu),
 		false,
 		FSlateIcon(),
@@ -290,28 +290,24 @@ void FEditorPlusSubMenu::MakeSubMenu(FMenuBuilder& MenuBuilder)
 TSharedRef<FEditorPlusMenuBase> FEditorPlusCommand::BindAction(
 	const TSharedRef<IEditorPlusCommandsInterface>& _CommandMgr,
 	const FExecuteAction& ExecuteAction,
-	const FName& FriendlyName,
 	const EUserInterfaceActionType& Type,
 	const FInputChord& Chord,
-	const FName& LoctextNamespace,
 	const FSlateIcon& Icon)
 {
 	this->CommandMgr = _CommandMgr;
-	BindAction(ExecuteAction, FriendlyName, Type, Chord, LoctextNamespace, Icon);
+	BindAction(ExecuteAction,Type, Chord, Icon);
 	return AsShared();
 }
 
 TSharedRef<FEditorPlusMenuBase> FEditorPlusCommand::BindAction(
 	const FExecuteAction& ExecuteAction,
-	const FName& FriendlyName,
 	const EUserInterfaceActionType& Type,
 	const FInputChord& Chord,
-	const FName& LoctextNamespace,
 	const FSlateIcon& Icon)
 {
 	CommandInfo = MakeShared<FEditorPlusCommandInfo>(
-		Name, ExecuteAction, FriendlyName, Tips, Hook, Type,
-		Chord, LoctextNamespace, Icon, GetUniqueId());
+		Name, ExecuteAction, GetFriendlyText(), GetFriendlyTips(), Hook, Type,
+		Chord, Icon, GetUniqueId());
 	return AsShared();
 }
 
@@ -336,7 +332,7 @@ void FEditorPlusCommand::Register(FMenuBuilder& MenuBuilder)
 	else
 	{
 		MenuBuilder.AddMenuEntry(
-			FText::FromName(CommandInfo->Name), FText::FromName(CommandInfo->Tips), CommandInfo->Icon,
+			CommandInfo->Label, CommandInfo->Tips, CommandInfo->Icon,
 			CommandInfo->ExecuteAction, CommandInfo->Hook, CommandInfo->Type);
 	}
 }
@@ -358,4 +354,17 @@ void FEditorPlusCommand::SetParentPath(const FString& ParentPath)
 
 //
 // endregion FEditorPlusCommand
+// ---------------------------------------------------------------------
+
+// ---------------------------------------------------------------------
+// region FEditorPlusWidget
+//
+void FEditorPlusWidget::Register(FMenuBuilder& MenuBuilder)
+{
+	if(Widget.IsValid())
+		MenuBuilder.AddWidget(Widget.ToSharedRef(), GetFriendlyText());
+}
+
+//
+// endregion FEditorPlusWidget
 // ---------------------------------------------------------------------

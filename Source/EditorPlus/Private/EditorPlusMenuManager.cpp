@@ -10,14 +10,21 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuManager::RegisterPath(
 	const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Menu)
 {
 	if(!Get().IsValid()) return nullptr;
-	return  Get()->PathMenuManager->RegisterPath(Path, Menu);
+	return Get()->PathMenuManager->RegisterPath(Path, Menu);
 }
 
-TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuManager::RegisterPathAction(
-	const FString& Path, const FExecuteAction& ExecuteAction, const FName& Hook)
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuManager::RegisterPath(const FString& Path, const FText& FriendlyName, const FText& FriendlyTips)
 {
 	if(!Get().IsValid()) return nullptr;
-	return Get()->PathMenuManager->RegisterAction(Path, ExecuteAction, Hook);
+	return Get()->PathMenuManager->RegisterPath(Path, FriendlyName, FriendlyTips);
+}
+
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuManager::RegisterPathAction(
+	const FString& Path, const FExecuteAction& ExecuteAction, const FName& Hook, const FText& FriendlyName, const FText& FriendlyTips)
+{
+	if(!Get().IsValid()) return nullptr;
+	return Get()->PathMenuManager->RegisterAction(Path, ExecuteAction, Hook, FriendlyName, FriendlyTips);
 }
 
 bool FEditorPlusMenuManager::UnregisterPath(const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Leaf)

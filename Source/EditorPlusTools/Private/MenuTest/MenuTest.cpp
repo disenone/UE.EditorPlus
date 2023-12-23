@@ -1,8 +1,11 @@
 ﻿#include "MenuTest.h"
+
 #include "EditorPlusPath.h"
 #include "EditorPlusUtils.h"
 
 DEFINE_LOG_CATEGORY(LogMenuTest);
+
+#define LOCTEXT_NAMESPACE "EditorPlusTools"
 
 class FMenuTestCommands: public TEditorPlusCommands<FMenuTestCommands>
 {
@@ -41,9 +44,9 @@ auto CreateClickLambda(const FString& Msg)
 		});
 }
 
-void FMenuTest::RegisterPath(const FString& Path, const bool ShouldSuccess)
+void FMenuTest::RegisterPath(const FString& Path, const bool ShouldSuccess, const FText& FriendlyName, const FText& FriendlyTips)
 {
-	const TSharedPtr<FEditorPlusMenuBase> Ret = FEditorPlusPath::RegisterPathAction(Path, CreateClickLambda(Path));
+	const TSharedPtr<FEditorPlusMenuBase> Ret = FEditorPlusPath::RegisterPathAction(Path, CreateClickLambda(Path), NAME_None, FriendlyName, FriendlyTips);
 	checkf(
 		ShouldSuccess == Ret.IsValid(),
 		TEXT("RegisterPath [%s] should be [%s], got [%s]"),
@@ -56,14 +59,20 @@ void FMenuTest::RegisterPath(const FString& Path, const bool ShouldSuccess)
 
 void FMenuTest::BuildPathMenu()
 {
-	RegisterPath("/MenuTest/SubMenu1/SubMenu1/Path1");
-	RegisterPath("/MenuTest/SubMenu1/SubMenu1/Path2");
-	RegisterPath("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1/Path3");
-	RegisterPath("MenuTest/<SubMenu>SubMenu1/<Section>Section1/Path4");
-	RegisterPath("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1/<Separator>Separator1/Path5");
-	RegisterPath("<Hook>Separator1/Path6");
-	RegisterPath("<Hook>Section1/Path7");
-	RegisterPath("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1/<Section>Section2/ShouldFail", false);
+	RegisterPath("/MenuTest/SubMenu1/SubMenu1/Path1", true, LOCTEXT("Path1", "Path1"), LOCTEXT("Path1Tips", "Path1Tips"));
+	RegisterPath("/MenuTest/SubMenu1/SubMenu1/Path2", true, LOCTEXT("Path2", "Path2"), LOCTEXT("Path2Tips", "Path2Tips"));
+	RegisterPath("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1/Path3", true, LOCTEXT("Path3", "Path3"), LOCTEXT("Path3Tips", "Path3Tips"));
+	RegisterPath("MenuTest/<SubMenu>SubMenu1/<Section>Section1/Path4", true, LOCTEXT("Path4", "Path4"), LOCTEXT("Path4Tips", "Path4Tips"));
+	RegisterPath("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1/<Separator>Separator1/Path5", true, LOCTEXT("Path5", "Path5"), LOCTEXT("Path5Tips", "Path5Tips"));
+	RegisterPath("<Hook>Separator1/Path6", true, LOCTEXT("Path6", "Path6"), LOCTEXT("Path6Tips", "Path6Tips"));
+	RegisterPath("<Hook>Section1/Path7", true, LOCTEXT("Path7", "Path7"), LOCTEXT("Path7Tips", "Path7Tips"));
+	RegisterPath("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1/<Section>Section2/ShouldFail", false, LOCTEXT("ShouldFail", "ShouldFail"), LOCTEXT("ShouldFailTips", "ShouldFailTips"));
+
+	// register path node loctext
+	FEditorPlusPath::GetNodeByPath("/MenuTest")->SetFriendlyName(LOCTEXT("MenuTest", "MenuTest"))->SetFriendlyTips(LOCTEXT("MenuTestTips", "MenuTestTips"));
+	FEditorPlusPath::GetNodeByPath("/MenuTest/<SubMenu>SubMenu1")->SetFriendlyName(LOCTEXT("SubMenu1", "SubMenu1"))->SetFriendlyTips(LOCTEXT("SubMenu1Tips", "SubMenu1Tips"));
+	FEditorPlusPath::GetNodeByPath("/MenuTest/<SubMenu>SubMenu1/<SubMenu>SubMenu1")->SetFriendlyName(LOCTEXT("SubMenu1", "SubMenu1"))->SetFriendlyTips(LOCTEXT("SubMenu1Tips", "SubMenu1Tips"));
+	FEditorPlusPath::GetNodeByPath("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1")->SetFriendlyName(LOCTEXT("Section1", "Section1"))->SetFriendlyTips(LOCTEXT("Section1Tips", "Section1Tips"));
 }
 
 
@@ -82,34 +91,34 @@ FReply FMenuTest::OnClickButton() const
 void FMenuTest::BuildCustomMenu()
 {
 	Menus.Push( 
-		NEW_EP_MENU(FEditorPlusMenuBar)("MenuTestCustom")
+		NEW_EP_MENU(FEditorPlusMenuBar)("MenuTestCustom", NAME_None, LOCTEXT("MenuTestCustom", "MenuTestCustom"), LOCTEXT("MenuTestCustomTips", "MenuTestCustomTips"))
 		->RegisterPath()
 		->Content({
-			NEW_EP_MENU(FEditorPlusSection)("CustomSection1")
+			NEW_EP_MENU(FEditorPlusSection)("CustomSection1", NAME_None, LOCTEXT("CustomSection1", "CustomSection1"))
 			->Content({
-				NEW_EP_MENU(FEditorPlusCommand)("Command1")
+				NEW_EP_MENU(FEditorPlusCommand)("Command1", NAME_None, LOCTEXT("Command1", "Command1"), LOCTEXT("Command1Tips", "Command1Tips"))
 				->BindAction(CreateClickLambda("Custom Command1")),
 				
-				NEW_EP_MENU(FEditorPlusCommand)("Command2")
+				NEW_EP_MENU(FEditorPlusCommand)("Command2", NAME_None, LOCTEXT("Command2", "Command2"), LOCTEXT("Command2Tips", "Command2Tips"))
 				->BindAction(CreateClickLambda("Custom Command2")),
 			}),
 
 			NEW_EP_MENU(FEditorPlusSeparator)("Separator1"),
 		
-			NEW_EP_MENU(FEditorPlusSubMenu)("SubMenu1")
+			NEW_EP_MENU(FEditorPlusSubMenu)("SubMenu1", NAME_None, LOCTEXT("SubMenu1", "SubMenu1"), LOCTEXT("SubMenu1Tips", "SubMenu1Tips"))
 			->Content({
-				NEW_EP_MENU(FEditorPlusCommand)("Command3")
+				NEW_EP_MENU(FEditorPlusCommand)("Command3", NAME_None, LOCTEXT("Command3", "Command3"), LOCTEXT("Command3Tips", "Command3Tips"))
 				->BindAction(CreateClickLambda("Custom Command3")),
 				
-				NEW_EP_MENU(FEditorPlusCommand)("Command4")
+				NEW_EP_MENU(FEditorPlusCommand)("Command4", NAME_None, LOCTEXT("Command4", "Command4"), LOCTEXT("Command4Tips", "Command4Tips"))
 				->BindAction(CreateClickLambda("Custom Command4")),
 				
-				NEW_EP_MENU(FEditorPlusCommand)("Command5")
+				NEW_EP_MENU(FEditorPlusCommand)("Command5", NAME_None, LOCTEXT("Command5", "Command5"), LOCTEXT("Command5Tips", "Command5Tips"))
 				->BindAction(
 					FMenuTestCommands::Get(),
 					CreateClickLambda("Custom Command5")),
 				
-				NEW_EP_MENU(FEditorPlusWidget)("Widget1")
+				NEW_EP_MENU(FEditorPlusWidget)("CustomWidget", LOCTEXT("CustomWidget", "CustomWidget"))
 				->BindWidget(
 					SNew(SHorizontalBox)
 					 + SHorizontalBox::Slot()
@@ -117,19 +126,19 @@ void FMenuTest::BuildCustomMenu()
 					 [
 						 SAssignNew(InputText, SEditableTextBox)
 						 .MinDesiredWidth(50)
-						 .Text(FText::FromName("Widget"))
+						 .Text(FText::FromName("CustomWidget"))
 					 ]
 					 + SHorizontalBox::Slot()
 					 .AutoWidth()
 					 .Padding(5, 0, 0, 0)
 					 [
 						 SNew(SButton)
-						 .Text(FText::FromName("Widget"))
+						 .Text(FText::FromName("CustomWidget"))
 						 .OnClicked(FOnClicked::CreateSP(this, &FMenuTest::OnClickButton))
 					 ]
 					),
 				
-				NEW_EP_MENU(FEditorPlusCommand)("Command6")
+				NEW_EP_MENU(FEditorPlusCommand)("Command6", NAME_None, LOCTEXT("Command6", "Command6"), LOCTEXT("Command6Tips", "Command6Tips"))
 				->BindAction(
 					FMenuTestCommands::Get(),
 					CreateClickLambda("Custom Command6")),
@@ -143,12 +152,12 @@ void FMenuTest::BuildMixMenu()
 {
 	Menus.Push(FEditorPlusPath::RegisterPath(
 		"MenuTest/<SubMenu>SubMenu1/<Section>MixSection1",
-		NEW_EP_MENU(FEditorPlusSection)("CustomSection1", "CustomSection1", "CustomSection1")
+		NEW_EP_MENU(FEditorPlusSection)("MixSection1", "MixSection1", LOCTEXT("MixSection1", "MixSection1"))
 		->Content({
-			NEW_EP_MENU(FEditorPlusCommand)("MixPath1")
+			NEW_EP_MENU(FEditorPlusCommand)("MixPath1", "MixPath1", LOCTEXT("MixPath1", "MixPath1"), LOCTEXT("MixPath1Tips", "MixPath1Tips"))
 			->BindAction(CreateClickLambda("MixPath1")),
 					
-			NEW_EP_MENU(FEditorPlusWidget)("MixWidget")
+			NEW_EP_MENU(FEditorPlusWidget)("MixWidget", LOCTEXT("MixWidget", "MixWidget"))
 			->BindWidget(
 				SNew(SHorizontalBox)
 				 + SHorizontalBox::Slot()
@@ -170,7 +179,7 @@ void FMenuTest::BuildMixMenu()
 		})	
 	));
 
-	RegisterPath("<Hook>CustomSection1/MixPath2");
+	RegisterPath("<Hook>CustomSection1/MixPath2", true, LOCTEXT("MixPath2", "MixPath2"), LOCTEXT("MixPath2Tips", "MixPath2Tips"));
 }
 
 void FMenuTest::BuildExtendMenu()
@@ -179,10 +188,10 @@ void FMenuTest::BuildExtendMenu()
 		"<Hook>EpicGamesHelp/<Separator>ExtendSeparator",
 		NEW_EP_MENU(FEditorPlusSeparator)("ExtendSeparator")
 		->Content({
-			NEW_EP_MENU(FEditorPlusCommand)("ExtendPath1")
+			NEW_EP_MENU(FEditorPlusCommand)("ExtendPath1", "ExtendPath1", LOCTEXT("ExtendPath1", "ExtendPath1"), LOCTEXT("ExtendPath1Tips", "ExtendPath1Tips"))
 			->BindAction(CreateClickLambda("ExtendPath1")),
 						
-			NEW_EP_MENU(FEditorPlusWidget)("ExtendWidget")
+			NEW_EP_MENU(FEditorPlusWidget)("ExtendWidget", LOCTEXT("ExtendWidget", "ExtendWidget"))
 			->BindWidget(
 				SNew(SHorizontalBox)
 				 + SHorizontalBox::Slot()
@@ -204,5 +213,7 @@ void FMenuTest::BuildExtendMenu()
 		})	
 	));
 	
-	RegisterPath("<Hook>ExtendSeparator/ExtendPath2");
+	RegisterPath("<Hook>ExtendSeparator/ExtendPath2", true, LOCTEXT("ExtendPath2", "ExtendPath2"), LOCTEXT("ExtendPath2Tips", "ExtendPath2Tips"));
 }
+
+#undef LOCTEXT_NAMESPACE

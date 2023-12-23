@@ -7,10 +7,16 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPath::RegisterPath(
 	return FEditorPlusMenuManager::RegisterPath(Path, Menu);
 }
 
-TSharedPtr<FEditorPlusMenuBase> FEditorPlusPath::RegisterPathAction(
-	const FString& Path, const FExecuteAction& ExecuteAction, const FName& Hook)
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPath::RegisterPath(const FString& Path, const FText& FriendlyName, const FText& FriendlyTips)
 {
-	return FEditorPlusMenuManager::RegisterPathAction(Path, ExecuteAction, Hook);
+	return FEditorPlusMenuManager::RegisterPath(Path, FriendlyName, FriendlyTips);
+}
+
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPath::RegisterPathAction(
+	const FString& Path, const FExecuteAction& ExecuteAction, const FName& Hook, const FText& FriendlyName, const FText& FriendlyTips)
+{
+	return FEditorPlusMenuManager::RegisterPathAction(Path, ExecuteAction, Hook, FriendlyName, FriendlyTips);
 }
 
 bool FEditorPlusPath::UnregisterPath(

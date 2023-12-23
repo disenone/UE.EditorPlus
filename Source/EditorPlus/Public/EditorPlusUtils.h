@@ -15,4 +15,6 @@ public:
 	static TArray<FString> SplitString(const FString& InString, const FString& InDelimiter = GetPathDelimiter());
 
 	static FName PathJoin(const FName& Left, const FName& Right, const FString& InDelimiter = GetPathDelimiter());
+
+	static FText CreateFText(const FString& InTextLiteral, const FString& InNamespace, const FString& InKey);
 };

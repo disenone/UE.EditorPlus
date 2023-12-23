@@ -31,10 +31,12 @@ BETTER_ENUM(EEditorPlusMenuType, uint8,
 class EDITORPLUS_API FEditorPlusMenuBase: public TSharedFromThis<FEditorPlusMenuBase>
 {
 public:
-	explicit FEditorPlusMenuBase(const FName& Name, const FName& Tips = NAME_None, const FName& Hook = NAME_None)
-		:Name(Name), Tips(Tips), Hook(Hook)
+	explicit FEditorPlusMenuBase(
+		const FName& InName, const FName& InHook=NAME_None,
+		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
+		: Name(InName), FriendlyName(InFriendlyName), FriendlyTips(InFriendlyTips), Hook(InHook)
 	{
-		if(Tips == NAME_None) this->Tips = Name;
+		if(FriendlyName.IsEmpty()) FriendlyName = FText::FromName(Name);
 	}
 	
 	virtual ~FEditorPlusMenuBase();
@@ -216,13 +218,14 @@ public:
 	
 	virtual FName GetName() const { return Name; }
 	virtual FName GetUniqueId() const { return FName(Path); }
-	virtual FName GetTips() const { return Tips; }
 	virtual FName GetHook() const { return Hook; }
 	virtual FName GetExtHook() const { return ExtHook; }
 	virtual EEditorPlusMenuType GetType() const = 0;
 	template <class Derived>
 	bool IsType() const { return GetType() == Derived::StaticType(); }
 	bool IsType(const EEditorPlusMenuType& Type) const { return GetType() == Type; }
+	virtual TSharedRef<FEditorPlusMenuBase> SetFriendlyName(const FText& InFriendlyName) { FriendlyName = InFriendlyName; return AsShared(); }
+	virtual TSharedRef<FEditorPlusMenuBase> SetFriendlyTips(const FText& InFriendlyTips) { FriendlyTips = InFriendlyTips; return AsShared(); }
 
 	static FString GetTypePathTag(const EEditorPlusMenuType& Type) { return PathTagLeft + FString(Type._to_string()) + PathTagRight; }
 	static EEditorPlusMenuType GetPathTagType(FString Tag)
@@ -274,8 +277,17 @@ public:
 		return AsShared();
 	}
 
-	static TSharedPtr<FEditorPlusMenuBase> CreateByPathName(const FString& PathName);
+	static TSharedPtr<FEditorPlusMenuBase> CreateByPathName(const FString& PathName, const FText& FriendlyName=FText::GetEmpty(), const FText& FriendlyTips=FText::GetEmpty());
 
+	virtual FText GetFriendlyText()
+	{
+		return FriendlyName;
+	}
+
+	virtual FText GetFriendlyTips()
+	{
+		return FriendlyTips;
+	}
 protected:
 	
 	virtual void RemoveMenuExtension();
@@ -306,11 +318,14 @@ public:
 	inline static const FString PathTagRight = ">";
 	
 protected:
-	// my name, will show in menu
+	// my name, will use for path
 	FName Name = "";
 
+	// my friendly name, will show in menu
+	FText FriendlyName = FText::GetEmpty();
+	
 	// tips for menu
-	FName Tips = "";
+	FText FriendlyTips = FText::GetEmpty();
 	
 	// hook for other menu to extend
 	FName Hook = NAME_None;
@@ -335,22 +350,14 @@ protected:
 };
 
 
-template <class Derived>
-class EDITORPLUS_API TEditorPlusMenuBase: public FEditorPlusMenuBase 
-{
-public:
-	explicit TEditorPlusMenuBase(const FName& Name, const FName& Tips = NAME_None, const FName& Hook = NAME_None)
-		: FEditorPlusMenuBase(Name, Tips, Hook) {}
-};
-
-
 // Root node, no children
-template <class Derived>
-class EDITORPLUS_API TEditorPlusMenuBaseRoot: public TEditorPlusMenuBase<Derived>
+class EDITORPLUS_API TEditorPlusMenuBaseRoot: public FEditorPlusMenuBase
 {
 public:
-	explicit TEditorPlusMenuBaseRoot(const FName& Name, const FName& Tips = NAME_None, const FName& Hook = NAME_None)
-		: TEditorPlusMenuBase<Derived>(Name, Tips, Hook) {}	
+	explicit TEditorPlusMenuBaseRoot(
+		const FName& InName, const FName& InHook = NAME_None,
+		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
+		: FEditorPlusMenuBase(InName, InHook, InFriendlyName, InFriendlyTips) {}	
 
 	virtual bool AllowRole(const EEditorPlusMenuRole Role) const override
 	{
@@ -360,12 +367,13 @@ public:
 
 
 // Root node, no children
-template <class Derived>
-class EDITORPLUS_API TEditorPlusMenuBaseNode: public TEditorPlusMenuBase<Derived>
+class EDITORPLUS_API TEditorPlusMenuBaseNode: public FEditorPlusMenuBase
 {
 public:
-	explicit TEditorPlusMenuBaseNode(const FName& Name, const FName& Tips = NAME_None, const FName& Hook = NAME_None)
-		: TEditorPlusMenuBase<Derived>(Name, Tips, Hook) {}	
+	explicit TEditorPlusMenuBaseNode(
+		const FName& InName, const FName& InHook = NAME_None,
+		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
+		: FEditorPlusMenuBase(InName, InHook, InFriendlyName, InFriendlyTips) {}	
 	virtual bool AllowRole(const EEditorPlusMenuRole Role) const override
 	{
 		return Role._to_integral() == EEditorPlusMenuRole::Node
@@ -375,12 +383,13 @@ public:
 
 
 // Leaf node, no children
-template <class Derived>
-class EDITORPLUS_API TEditorPlusMenuBaseLeaf: public TEditorPlusMenuBase<Derived>
+class EDITORPLUS_API TEditorPlusMenuBaseLeaf: public FEditorPlusMenuBase
 {
 public:
-	explicit TEditorPlusMenuBaseLeaf(const FName& Name, const FName& Tips = NAME_None, const FName& Hook = NAME_None)
-		: TEditorPlusMenuBase<Derived>(Name, Tips, Hook) {}	
+	explicit TEditorPlusMenuBaseLeaf(
+		const FName& InName, const FName& InHook = NAME_None,
+		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
+		: FEditorPlusMenuBase(InName, InHook, InFriendlyName, InFriendlyTips) {}	
 	
 	virtual bool AllowRole(const EEditorPlusMenuRole Role) const override
 	{
@@ -388,19 +397,19 @@ public:
 	}
 
 private:
-	using TEditorPlusMenuBase<Derived>::Content;
-	using TEditorPlusMenuBase<Derived>::ClearContent;
-	using TEditorPlusMenuBase<Derived>::AddChildren;
-	using TEditorPlusMenuBase<Derived>::ClearChildren;
+	using FEditorPlusMenuBase::Content;
+	using FEditorPlusMenuBase::ClearContent;
+	using FEditorPlusMenuBase::AddChildren;
+	using FEditorPlusMenuBase::ClearChildren;
 };
 
 
-class EDITORPLUS_API FEditorPlusHook: public TEditorPlusMenuBaseRoot<FEditorPlusHook>
+class EDITORPLUS_API FEditorPlusHook: public TEditorPlusMenuBaseRoot
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseRoot<FEditorPlusHook>;
+	using FBaseType = TEditorPlusMenuBaseRoot;
 	
-	explicit FEditorPlusHook(const FName& Name): FBaseType(Name, Name, Name)
+	explicit FEditorPlusHook(const FName& Name): FBaseType(Name, Name)
 	{
 		Path = "/" + FEditorPlusHook::GetPathName();
 	}
@@ -435,13 +444,16 @@ public:
 };
 
 
-class EDITORPLUS_API FEditorPlusMenuBar: public TEditorPlusMenuBaseNode<FEditorPlusMenuBar>
+class EDITORPLUS_API FEditorPlusMenuBar: public TEditorPlusMenuBaseNode
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseNode<FEditorPlusMenuBar>;
+	using FBaseType = TEditorPlusMenuBaseNode;
 	
-	explicit FEditorPlusMenuBar(const FName& Name, const FName& Tips = NAME_None, const FName& Hook = NAME_None)
-		: FBaseType(Name, Tips, Hook) {}
+	explicit FEditorPlusMenuBar(
+		const FName& InName, const FName& InHook = NAME_None,
+		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
+		: FBaseType(InName, InHook, InFriendlyName, InFriendlyTips) {}	
+		
 	virtual ~FEditorPlusMenuBar() override;
 	
 	virtual void Register(FMenuBarBuilder& MenuBarBuilder) override;
@@ -471,13 +483,15 @@ protected:
 };
 
 
-class EDITORPLUS_API FEditorPlusSection: public TEditorPlusMenuBaseNode<FEditorPlusSection>
+class EDITORPLUS_API FEditorPlusSection: public TEditorPlusMenuBaseNode
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseNode<FEditorPlusSection>;
+	using FBaseType = TEditorPlusMenuBaseNode;
 	
-	explicit FEditorPlusSection(const FName& Name="", const FName& Tips="", const FName& Hook=NAME_None)
-		: FBaseType(Name, Tips, Hook)  {}
+	explicit FEditorPlusSection(
+		const FName& InName, const FName& InHook = NAME_None,
+		const FText& InFriendlyName=FText::GetEmpty())
+		: FBaseType(InName, InHook, InFriendlyName) {}	
 	
 	virtual void Register(FMenuBuilder& MenuBuilder) override;
 
@@ -504,12 +518,12 @@ public:
 };
 
 
-class EDITORPLUS_API FEditorPlusSeparator: public TEditorPlusMenuBaseNode<FEditorPlusSeparator>
+class EDITORPLUS_API FEditorPlusSeparator: public TEditorPlusMenuBaseNode
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseNode<FEditorPlusSeparator>;
+	using FBaseType = TEditorPlusMenuBaseNode;
 	
-	explicit FEditorPlusSeparator(const FName& Hook=NAME_None): FBaseType(Hook, Hook, Hook) {}
+	explicit FEditorPlusSeparator(const FName& Hook=NAME_None): FBaseType(Hook, Hook) {}
 	
 	virtual void Register(FMenuBuilder& MenuBuilder) override;
 	
@@ -535,14 +549,16 @@ public:
 };
 
 
-class EDITORPLUS_API FEditorPlusSubMenu: public TEditorPlusMenuBaseNode<FEditorPlusSubMenu>
+class EDITORPLUS_API FEditorPlusSubMenu: public TEditorPlusMenuBaseNode
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseNode<FEditorPlusSubMenu>;
+	using FBaseType = TEditorPlusMenuBaseNode;
 	
-	explicit FEditorPlusSubMenu(const FName& Name, const FName& Tips="", const FName& Hook=NAME_None)
-		: FBaseType(Name, Tips, Hook) {}
-	
+	explicit FEditorPlusSubMenu(
+		const FName& InName, const FName& InHook = NAME_None,
+		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
+		: FBaseType(InName, InHook, InFriendlyName, InFriendlyTips) {}			
+		
 	virtual void Register(FMenuBuilder& MenuBuilder) override;
 	
 	virtual EEditorPlusMenuType GetType() const override { return StaticType(); }
@@ -569,30 +585,29 @@ protected:
 };
 
 
-class EDITORPLUS_API FEditorPlusCommand: public TEditorPlusMenuBaseLeaf<FEditorPlusCommand>
+class EDITORPLUS_API FEditorPlusCommand: public TEditorPlusMenuBaseLeaf
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseLeaf<FEditorPlusCommand>;
+	using FBaseType = TEditorPlusMenuBaseLeaf;
 
-	explicit FEditorPlusCommand(const FName& Name, const FName& Tips="", const FName& Hook=NAME_None)
-		: FBaseType(Name, Tips, Hook) {}
+	explicit FEditorPlusCommand(
+		const FName& InName, const FName& InHook = NAME_None,
+		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
+		: FBaseType(InName, InHook, InFriendlyName, InFriendlyTips) {}
+	
 	virtual ~FEditorPlusCommand() override;
 	
 	TSharedRef<FEditorPlusMenuBase> BindAction(
 		const FExecuteAction& ExecuteAction,
-		const FName& FriendlyName=NAME_None,
 		const EUserInterfaceActionType& Type = EUserInterfaceActionType::Button,
 		const FInputChord& Chord = FInputChord(),
-		const FName& LoctextNamespace = NAME_None,
 		const FSlateIcon& Icon = FSlateIcon());
 	
 	TSharedRef<FEditorPlusMenuBase> BindAction(
 		const TSharedRef<IEditorPlusCommandsInterface>& CommandMgr,
 		const FExecuteAction& ExecuteAction,
-		const FName& FriendlyName=NAME_None,
 		const EUserInterfaceActionType& Type = EUserInterfaceActionType::Button,
 		const FInputChord& Chord = FInputChord(),
-		const FName& LoctextNamespace = NAME_None,
 		const FSlateIcon& Icon = FSlateIcon());
 	
 	virtual void Register(FMenuBuilder& MenuBuilder) override;
@@ -618,21 +633,21 @@ protected:
 };
 
 
-class EDITORPLUS_API FEditorPlusWidget: public TEditorPlusMenuBaseLeaf<FEditorPlusWidget>
+class EDITORPLUS_API FEditorPlusWidget: public TEditorPlusMenuBaseLeaf
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseLeaf<FEditorPlusWidget>;
+	using FBaseType = TEditorPlusMenuBaseLeaf;
 
-	explicit FEditorPlusWidget(const FName& Name, const FName& Tips="", const FName& Hook=NAME_None)
-		: FBaseType(Name, Tips, Hook) {}	
+	explicit FEditorPlusWidget(const FName& InName, const FText& InFriendlyName=FText::GetEmpty())
+		: FBaseType(InName, NAME_None, InFriendlyName)
+	{
+		// keep the original FriendlyName, because Widget is not necessary to have one
+		FriendlyName = InFriendlyName;
+	}	
 	
 	TSharedRef<FEditorPlusMenuBase> BindWidget(const TSharedRef<SWidget>& _Widget) { this->Widget = _Widget; return AsShared(); }
 	
-	virtual void Register(FMenuBuilder& MenuBuilder) override
-	{
-		if(Widget.IsValid())
-			MenuBuilder.AddWidget(Widget.ToSharedRef(), FText::FromString(""));
-	}
+	virtual void Register(FMenuBuilder& MenuBuilder) override;
 	
 	virtual EEditorPlusMenuType GetType() const override { return StaticType(); }
 	static EEditorPlusMenuType StaticType() { return EEditorPlusMenuType::Command; }
@@ -650,10 +665,10 @@ protected:
 };
 
 
-class EDITORPLUS_API FEditorPlusMenuTool: public TEditorPlusMenuBaseLeaf<FEditorPlusMenuTool>
+class EDITORPLUS_API FEditorPlusMenuTool: public TEditorPlusMenuBaseLeaf
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseLeaf<FEditorPlusMenuTool>;
+	using FBaseType = TEditorPlusMenuBaseLeaf;
 	
 	explicit FEditorPlusMenuTool(const FName& Name, const TSharedRef<IEditorPlusToolInterface>& Tool)
 		: FBaseType(Name), Tool(Tool) {}
@@ -675,6 +690,3 @@ public:
 protected:
 	TSharedRef<IEditorPlusToolInterface> Tool;
 };
-
-
-

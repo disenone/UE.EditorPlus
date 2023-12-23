@@ -1,25 +1,27 @@
 #pragma once
 
-#include "EditorPlusUtils.h"
-
 class EDITORPLUS_API FEditorPlusCommandInfo
 {
 public:
 	FEditorPlusCommandInfo(
-		const FName& Name,
-		const FExecuteAction& ExecuteAction,
-		const FName& FriendlyName = NAME_None,
-		const FName& Tips = NAME_None,
-		const FName& Hook = NAME_None,
-		const EUserInterfaceActionType& Type = EUserInterfaceActionType::Button,
-		const FInputChord& Chord = FInputChord(),
-		const FName& LoctextNamespace = NAME_None,
-		const FSlateIcon& Icon = FSlateIcon(),
-		const FName& UniqueId = NAME_None)
-		:	Name(Name), FriendlyName(FriendlyName == NAME_None ? Name: FriendlyName),
-			Tips(Tips), Hook(Hook), Type(Type), Chord(Chord),
-			LoctextNamespace(LoctextNamespace), Icon(Icon), ExecuteAction(ExecuteAction),
-			UniqueId(UniqueId != NAME_None ? UniqueId: Name)
+		const FName& InName,
+		const FExecuteAction& InExecuteAction,
+		const FText& InLabel = FText::GetEmpty(),
+		const FText& InTips = FText::GetEmpty(),
+		const FName& InHook = NAME_None,
+		const EUserInterfaceActionType& InType = EUserInterfaceActionType::Button,
+		const FInputChord& InChord = FInputChord(),
+		const FSlateIcon& InIcon = FSlateIcon(),
+		const FName& InUniqueId = NAME_None)
+		:	Name(InName),
+			Label(InLabel.IsEmpty() ? FText::FromName(InName) : InLabel),
+			Tips(InTips.IsEmpty() ? FText::FromName(InName) : InTips),
+			Hook(InHook),
+			Type(InType),
+			Chord(InChord),
+			Icon(InIcon),
+			ExecuteAction(InExecuteAction),
+			UniqueId(InUniqueId != NAME_None ? InUniqueId: InName)
 	{}
 
 	void Register(FBindingContext* Context);
@@ -30,12 +32,11 @@ public:
 	
 	TSharedPtr<FUICommandInfo> Info;
 	const FName Name;
-	const FName FriendlyName;
-	const FName Tips;
+	const FText Label;
+	const FText Tips;
 	const FName Hook;
 	const EUserInterfaceActionType Type;
 	const FInputChord Chord;
-	const FName LoctextNamespace;
 	const FSlateIcon Icon;
 	const FExecuteAction ExecuteAction;
 	FName UniqueId;

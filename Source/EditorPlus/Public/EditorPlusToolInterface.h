@@ -17,6 +17,8 @@ public:
 	
 	virtual void StartupTools()
 	{
+		if (IsRunningCommandlet())
+			return;
 		AddTools();
 		for (const auto& Tool: Tools)
 		{
@@ -26,6 +28,8 @@ public:
 
 	virtual void ShutdownTools()
 	{
+		if (IsRunningCommandlet())
+			return;
 		for (const auto& Tool: Tools)
 		{
 			Tool->OnShutdown();
