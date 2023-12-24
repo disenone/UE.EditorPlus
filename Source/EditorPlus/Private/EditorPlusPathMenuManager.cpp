@@ -80,7 +80,7 @@ TSharedPtr<FEditorPlusHook> FEditorPlusPathMenuManager::MakeRoot(const FString& 
 	if (RootMap.Contains(PathName)) return RootMap[PathName];
 
 	const FString& Name = TypeAneName.Get<1>();
-	auto Hook = NEW_EP_MENU(FEditorPlusHook)(FName(Name));
+	auto Hook = EP_NEW_MENU(FEditorPlusHook)(FName(Name));
 	RootMap.Add(PathName, Hook);
 	return Hook;
 }
@@ -193,9 +193,9 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::RegisterAction(
 
 	const FName Name = FName(TypeAneName.Get<1>());
 
-	const FName InHook = Hook.GetStringLength() == 0 ? Name : Hook;
+	const FName InHook = Hook == EP_FNAME_HOOK_AUTO ? Name : Hook;
 
-	const auto Command = NEW_EP_MENU(FEditorPlusCommand)(
+	const auto Command = EP_NEW_MENU(FEditorPlusCommand)(
 		Name, InHook, FriendlyName, FriendlyTips)
 		->BindAction(ExecuteAction);
 	

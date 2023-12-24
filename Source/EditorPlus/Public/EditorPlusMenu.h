@@ -1,12 +1,11 @@
 ﻿#pragma once
 
 #include "EditorPlusEnum.h"
-#include "EditorPlusToolInterface.h"
 #include "EditorPlusCommandInfo.h"
-#include "EditorPlusUtils.h"
 #include "EditorPlusLog.h"
 
-#define NEW_EP_MENU(Class) MakeShared<Class>
+#define EP_NEW_MENU(Class) MakeShared<Class>
+#define EP_FNAME_HOOK_AUTO TEXT("__AUTO__")
 
 BETTER_ENUM(EEditorPlusMenuRole, uint8,
 	None,
@@ -24,8 +23,7 @@ BETTER_ENUM(EEditorPlusMenuType, uint8,
 	Section,
 	SubMenu,
 	Command,	
-	Widget,
-	MenuTool
+	Widget
 );
 
 class EDITORPLUS_API FEditorPlusMenuBase: public TSharedFromThis<FEditorPlusMenuBase>
@@ -438,7 +436,6 @@ public:
 		const auto Type = Child->GetType();
 		return Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::None)
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook)
-			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuTool)
 		;
 	}
 };
@@ -474,7 +471,6 @@ public:
 		const auto Type = Child->GetType();
 		return Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::None)
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook)
-			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuTool)
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuBar)
 		;
 	}
@@ -510,7 +506,6 @@ public:
 		const auto Type = Child->GetType();
 		return Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::None)
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook)
-			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuTool)
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuBar)
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Section)
 		;
@@ -542,7 +537,6 @@ public:
 		const auto Type = Child->GetType();
 		return Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::None)
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook)
-			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuTool)
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuBar)
 		;
 	}
@@ -576,7 +570,6 @@ public:
 		const auto Type = Child->GetType();
 		return Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::None)
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook)
-			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuTool)
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuBar)
 		;
 	}
@@ -662,31 +655,4 @@ public:
 	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override { return false; }
 protected:
 	TSharedPtr<SWidget> Widget;
-};
-
-
-class EDITORPLUS_API FEditorPlusMenuTool: public TEditorPlusMenuBaseLeaf
-{
-public:
-	using FBaseType = TEditorPlusMenuBaseLeaf;
-	
-	explicit FEditorPlusMenuTool(const FName& Name, const TSharedRef<IEditorPlusToolInterface>& Tool)
-		: FBaseType(Name), Tool(Tool) {}
-	virtual ~FEditorPlusMenuTool() override { FEditorPlusMenuTool::Unregister(); }
-	
-	virtual void Register(FMenuBuilder& MenuBuilder) override
-	{
-		Tool->OnBuildMenu(MenuBuilder);
-	}
-	virtual void Unregister() override
-	{
-		Tool->OnDestroyMenu();
-	}
-
-	virtual EEditorPlusMenuType GetType() const override { return StaticType(); }
-	static EEditorPlusMenuType StaticType() { return EEditorPlusMenuType::MenuTool; }
-
-	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override { return false; }
-protected:
-	TSharedRef<IEditorPlusToolInterface> Tool;
 };
