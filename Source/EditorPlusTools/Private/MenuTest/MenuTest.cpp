@@ -46,7 +46,8 @@ auto CreateClickLambda(const FString& Msg)
 
 void FMenuTest::RegisterPath(const FString& Path, const bool ShouldSuccess, const FText& FriendlyName, const FText& FriendlyTips)
 {
-	const TSharedPtr<FEditorPlusMenuBase> Ret = FEditorPlusPath::RegisterPathAction(Path, CreateClickLambda(Path), NAME_None, FriendlyName, FriendlyTips);
+	const TSharedPtr<FEditorPlusMenuBase> Ret = FEditorPlusPath::RegisterPathAction(
+		Path, CreateClickLambda(Path), "", FriendlyName, FriendlyTips);
 	checkf(
 		ShouldSuccess == Ret.IsValid(),
 		TEXT("RegisterPath [%s] should be [%s], got [%s]"),

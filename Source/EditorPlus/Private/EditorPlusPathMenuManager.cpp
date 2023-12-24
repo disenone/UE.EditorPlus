@@ -192,7 +192,11 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::RegisterAction(
 	}
 
 	const FName Name = FName(TypeAneName.Get<1>());
-	const auto Command = NEW_EP_MENU(FEditorPlusCommand)(Name, Hook.IsNone() ? Name : Hook, FriendlyName, FriendlyTips)
+
+	const FName InHook = Hook.GetStringLength() == 0 ? Name : Hook;
+
+	const auto Command = NEW_EP_MENU(FEditorPlusCommand)(
+		Name, InHook, FriendlyName, FriendlyTips)
 		->BindAction(ExecuteAction);
 	
 	return DoRegister(NormalizedNames, Command);

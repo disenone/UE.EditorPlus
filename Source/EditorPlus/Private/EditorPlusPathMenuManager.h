@@ -7,7 +7,7 @@ public:
 	TSharedPtr<FEditorPlusMenuBase> RegisterPath(const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Menu=nullptr);
 	TSharedPtr<FEditorPlusMenuBase> RegisterPath(const FString& Path, const FText& FriendlyName, const FText& FriendlyTips);
 	TSharedPtr<FEditorPlusMenuBase> RegisterAction(
-		const FString& Path, const FExecuteAction& ExecuteAction, const FName& Hook=NAME_None,
+		const FString& Path, const FExecuteAction& ExecuteAction, const FName& Hook="",
 		const FText& FriendlyName=FText::GetEmpty(), const FText& FriendlyTips=FText::GetEmpty());
 	
 	bool Unregister(const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Leaf=nullptr);
