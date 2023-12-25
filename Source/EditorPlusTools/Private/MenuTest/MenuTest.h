@@ -13,6 +13,7 @@ private:
 	void BuildCustomMenu();
 	void BuildMixMenu();
 	void BuildExtendMenu();
+	void BuildTestMenu();
 	FReply OnClickButton() const;
 	void RegisterPath(const FString& Path, const bool ShouldSuccess=true, const FText& FriendlyName=FText::GetEmpty(), const FText& FriendlyTips=FText::GetEmpty());
 	

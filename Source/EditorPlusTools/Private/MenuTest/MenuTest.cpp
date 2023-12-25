@@ -25,6 +25,7 @@ void FMenuTest::OnStartup()
 	BuildCustomMenu();
 	BuildMixMenu();
 	BuildExtendMenu();
+	// BuildTestMenu();
 }
 
 void FMenuTest::OnShutdown()
@@ -215,6 +216,74 @@ void FMenuTest::BuildExtendMenu()
 	));
 	
 	RegisterPath("<Hook>ExtendSeparator/ExtendPath2", true, LOCTEXT("ExtendPath2", "ExtendPath2"), LOCTEXT("ExtendPath2Tips", "ExtendPath2Tips"));
+}
+
+
+void FMenuTest::BuildTestMenu()
+{
+	auto MenuExtender = MakeShared<FExtender>();
+
+	MenuExtender->AddMenuBarExtension(
+		"Help", EExtensionHook::After,
+		nullptr,
+		FMenuBarExtensionDelegate::CreateLambda([](FMenuBarBuilder& MenuBarBuilder)
+		{
+			MenuBarBuilder.AddPullDownMenu(
+				FText::FromName("MenuTest"),
+				FText::FromName("MenuTest"),
+				FNewMenuDelegate::CreateLambda([](FMenuBuilder& MenuBuilder)
+				{
+					MenuBuilder.BeginSection(NAME_None, FText::FromName("MenuTestSection"));
+					MenuBuilder.AddMenuSeparator();
+					MenuBuilder.AddMenuEntry(
+						FText::FromName("MenuTestAction"), FText::FromName("MenuTestAction"),
+						FSlateIcon(), FUIAction(FExecuteAction::CreateLambda([]()
+						{
+							UE_LOG(LogMenuTest, Display, TEXT("MenuTestAction"));
+						})));
+
+					MenuBuilder.AddSubMenu(
+						FText::FromName("MenuTestSubb"),
+						FText::FromName("MenuTestSubb"),
+						FNewMenuDelegate::CreateLambda([](FMenuBuilder& MenuBuilder)
+						{
+							MenuBuilder.AddMenuEntry(
+								FText::FromName("MenuTestSubAction"), FText::FromName("MenuTestSubAction"),
+								FSlateIcon(), FUIAction(FExecuteAction::CreateLambda([]()
+								{
+									UE_LOG(LogMenuTest, Display, TEXT("MenuTestSubAction"));
+								})));
+						}));
+					MenuBuilder.EndSection();
+
+					MenuBuilder.AddWidget(
+					SNew(SHorizontalBox)
+						 + SHorizontalBox::Slot()
+						 .AutoWidth()
+						 [
+							 SNew(SEditableTextBox)
+							 .MinDesiredWidth(50)
+							 .Text(FText::FromName("MenuTestWidget"))
+						 ]
+						 + SHorizontalBox::Slot()
+						 .AutoWidth()
+						 .Padding(5, 0, 0, 0)
+						 [
+							SNew(SButton)
+							.Text(FText::FromName("ExtendWidget"))
+							.OnClicked(FOnClicked::CreateLambda([]()
+							{
+								// do action
+								return FReply::Handled();
+							}))
+						 ],
+					 FText::GetEmpty()
+					);
+				}),
+				"MenuTest");
+		})
+	);
+	FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor").GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 }
 
 #undef LOCTEXT_NAMESPACE
