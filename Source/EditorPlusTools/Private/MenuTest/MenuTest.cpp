@@ -283,6 +283,21 @@ void FMenuTest::BuildTestMenu()
 				"MenuTest");
 		})
 	);
+
+	MenuExtender->AddMenuExtension(
+		"Programming", EExtensionHook::After,
+		nullptr,
+		FMenuExtensionDelegate::CreateLambda([](FMenuBuilder& MenuBuilder)
+		{
+			MenuBuilder.AddMenuEntry(
+			FText::FromName("MenuTestAction"), FText::FromName("MenuTestAction"),
+			FSlateIcon(), FUIAction(FExecuteAction::CreateLambda([]()
+			{
+				UE_LOG(LogMenuTest, Display, TEXT("MenuTestAction"));
+			})));
+		})
+	);
+
 	FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor").GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 }
 
