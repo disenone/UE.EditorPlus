@@ -102,5 +102,6 @@ FEditorPlusPath::RegisterPath(
 - ~~解决 uniid 问题~~
 - ~~增加功能支持在编辑器原来的菜单栏里面加菜单~~
 - ~~支持多语言~~
+- ~~支持指定 parent 和 path 来扩展菜单~~
 - 增加工具 收藏菜单
 - pathmenu 支持扩展工具栏
