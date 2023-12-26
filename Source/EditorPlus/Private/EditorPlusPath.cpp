@@ -19,6 +19,25 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPath::RegisterPathAction(
 	return FEditorPlusMenuManager::RegisterPathAction(Path, ExecuteAction, Hook, FriendlyName, FriendlyTips);
 }
 
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPath::RegisterChildPath(
+	const TSharedRef<FEditorPlusMenuBase>& InParent, const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Menu)
+{
+	return FEditorPlusMenuManager::RegisterChildPath(InParent, Path, Menu);
+}
+
+TSharedPtr<FEditorPlusMenuBase>  FEditorPlusPath::RegisterChildPath(
+	const TSharedRef<FEditorPlusMenuBase>& InParent, const FString& Path, const FText& FriendlyName, const FText& FriendlyTips)
+{
+	return FEditorPlusMenuManager::RegisterChildPath(InParent, Path, FriendlyName, FriendlyTips);
+}
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPath::RegisterChildPathAction(
+	const TSharedRef<FEditorPlusMenuBase>& InParent, const FString& Path, const FExecuteAction& ExecuteAction,
+	const FName& Hook, const FText& FriendlyName, const FText& FriendlyTips)
+{
+	return FEditorPlusMenuManager::RegisterChildPathAction(InParent, Path, ExecuteAction, Hook, FriendlyName, FriendlyTips);
+}
+
 bool FEditorPlusPath::UnregisterPath(
 	const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Leaf)
 {

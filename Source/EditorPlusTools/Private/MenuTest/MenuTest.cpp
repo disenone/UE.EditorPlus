@@ -45,9 +45,9 @@ auto CreateClickLambda(const FString& Msg)
 		});
 }
 
-void FMenuTest::RegisterPath(const FString& Path, const bool ShouldSuccess, const FText& FriendlyName, const FText& FriendlyTips)
+TSharedPtr<FEditorPlusMenuBase> FMenuTest::RegisterPath(const FString& Path, const bool ShouldSuccess, const FText& FriendlyName, const FText& FriendlyTips)
 {
-	const TSharedPtr<FEditorPlusMenuBase> Ret = FEditorPlusPath::RegisterPathAction(
+	TSharedPtr<FEditorPlusMenuBase> Ret = FEditorPlusPath::RegisterPathAction(
 		Path, CreateClickLambda(Path), EP_FNAME_HOOK_AUTO, FriendlyName, FriendlyTips);
 	checkf(
 		ShouldSuccess == Ret.IsValid(),
@@ -55,7 +55,8 @@ void FMenuTest::RegisterPath(const FString& Path, const bool ShouldSuccess, cons
 		ToCStr(Path),
 		ShouldSuccess? "Success" : "Failed",
 		Ret.IsValid() ? "Success" : "Failed");
-	Menus.Push(Ret);	
+	if(Ret.IsValid()) Menus.Push(Ret);
+	return Ret;
 }
 
 
@@ -75,6 +76,14 @@ void FMenuTest::BuildPathMenu()
 	FEditorPlusPath::GetNodeByPath("/MenuTest/<SubMenu>SubMenu1")->SetFriendlyName(LOCTEXT("SubMenu1", "SubMenu1"))->SetFriendlyTips(LOCTEXT("SubMenu1Tips", "SubMenu1Tips"));
 	FEditorPlusPath::GetNodeByPath("/MenuTest/<SubMenu>SubMenu1/<SubMenu>SubMenu1")->SetFriendlyName(LOCTEXT("SubMenu1", "SubMenu1"))->SetFriendlyTips(LOCTEXT("SubMenu1Tips", "SubMenu1Tips"));
 	FEditorPlusPath::GetNodeByPath("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1")->SetFriendlyName(LOCTEXT("Section1", "Section1"))->SetFriendlyTips(LOCTEXT("Section1Tips", "Section1Tips"));
+
+	const auto Section = FEditorPlusPath::GetNodeByPath("/<Hook>Help/<MenuBar>MenuTest/<SubMenu>SubMenu1/<Section>Section1");
+	checkf(
+		FEditorPlusPath::RegisterChildPathAction(
+			Section.ToSharedRef(), "Path8", CreateClickLambda("Path8"), EP_FNAME_HOOK_AUTO,
+			LOCTEXT("Path8", "Path8"), LOCTEXT("Path8Tips", "Path8Tips"))
+		.IsValid(),
+		TEXT("RegisterChildPath Path8 failed"));
 }
 
 

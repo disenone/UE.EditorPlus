@@ -15,7 +15,7 @@ private:
 	void BuildExtendMenu();
 	void BuildTestMenu();
 	FReply OnClickButton() const;
-	void RegisterPath(const FString& Path, const bool ShouldSuccess=true, const FText& FriendlyName=FText::GetEmpty(), const FText& FriendlyTips=FText::GetEmpty());
+	TSharedPtr<FEditorPlusMenuBase> RegisterPath(const FString& Path, const bool ShouldSuccess=true, const FText& FriendlyName=FText::GetEmpty(), const FText& FriendlyTips=FText::GetEmpty());
 	
 	TArray<TSharedPtr<FEditorPlusMenuBase>> Menus;
 	TSharedPtr<SEditableTextBox> InputText;

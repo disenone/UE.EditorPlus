@@ -27,6 +27,28 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuManager::RegisterPathAction(
 	return Get()->PathMenuManager->RegisterAction(Path, ExecuteAction, Hook, FriendlyName, FriendlyTips);
 }
 
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuManager::RegisterChildPath(
+	const TSharedRef<FEditorPlusMenuBase>& InParent, const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Menu)
+{
+	if(!Get().IsValid()) return nullptr;
+	return Get()->PathMenuManager->RegisterChildPath(InParent, Path, Menu);
+}
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuManager::RegisterChildPath(
+	const TSharedRef<FEditorPlusMenuBase>& InParent, const FString& Path, const FText& FriendlyName, const FText& FriendlyTips)
+{
+	if(!Get().IsValid()) return nullptr;
+	return Get()->PathMenuManager->RegisterChildPath(InParent, Path, FriendlyName, FriendlyTips);
+}
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuManager::RegisterChildPathAction(
+	const TSharedRef<FEditorPlusMenuBase>& InParent, const FString& Path, const FExecuteAction& ExecuteAction,
+	const FName& Hook, const FText& FriendlyName, const FText& FriendlyTips)
+{
+	if(!Get().IsValid()) return nullptr;
+	return Get()->PathMenuManager->RegisterChildAction(InParent, Path, ExecuteAction, Hook, FriendlyName, FriendlyTips);
+}
+
 bool FEditorPlusMenuManager::UnregisterPath(const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Leaf)
 {
 	if(!Get().IsValid()) return false;

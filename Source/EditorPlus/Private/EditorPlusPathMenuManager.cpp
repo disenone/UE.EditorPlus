@@ -16,7 +16,7 @@ TArray<FString> CheckAndSplitPath(const FName& Path, const int32 MinLen = 0)
 }
 
 
-TArray<FString> FEditorPlusPathMenuManager::NormalizeSplitPath(const FString& Path)
+TArray<FString> FEditorPlusPathMenuManager::NormalizeSplitPath(const FString& Path, const bool AutoInsertHook, const bool AutoInsertBar)
 {
 	if(Path == "") return TArray<FString>();
 
@@ -43,13 +43,13 @@ TArray<FString> FEditorPlusPathMenuManager::NormalizeSplitPath(const FString& Pa
 		}
 		else
 		{
-			if(i == 0) NormalizedNames.Push(FEditorPlusMenuBase::GetTypePathTag(EEditorPlusMenuType::MenuBar) + Name);
+			if(AutoInsertBar && i == 0) NormalizedNames.Push(FEditorPlusMenuBase::GetTypePathTag(EEditorPlusMenuType::MenuBar) + Name);
 			else if(i == Split.Num() - 1) NormalizedNames.Push(FEditorPlusMenuBase::GetTypePathTag(EEditorPlusMenuType::Command) + Name);
 			else NormalizedNames.Push(FEditorPlusMenuBase::GetTypePathTag(EEditorPlusMenuType::SubMenu) + Name);
 		}
 	}
 
-	if(!NormalizedNames[0].StartsWith(FEditorPlusMenuBase::GetTypePathTag(EEditorPlusMenuType::Hook)))
+	if(AutoInsertHook && !NormalizedNames[0].StartsWith(FEditorPlusMenuBase::GetTypePathTag(EEditorPlusMenuType::Hook)))
 		NormalizedNames.Insert(FEditorPlusMenuBase::GetTypePathTag(EEditorPlusMenuType::Hook) + "Help", 0);
 
 	return NormalizedNames;
@@ -102,6 +102,9 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::MakeNode(
 		}
 		
 		if(!Parent->AddChild(Node.ToSharedRef())) return nullptr;
+
+		if(!FriendlyName.IsEmpty()) Node->SetFriendlyName(FriendlyName);
+		if(!FriendlyTips.IsEmpty()) Node->SetFriendlyTips(FriendlyTips);
 		return Node;	
 	}
 	
@@ -144,9 +147,24 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::DoRegister(
 	// Root
 	const TSharedPtr<FEditorPlusHook> Root = MakeRoot(NormalizedPathNames[0]);
 	if(!Root.IsValid()) return nullptr;
-	
-	TSharedPtr<FEditorPlusMenuBase> Parent = Root;
-	
+
+	return DoRegister(Root.ToSharedRef(), NormalizedPathNames, Node, FriendlyName, FriendlyTips);
+}
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::DoRegister(
+	const TSharedRef<FEditorPlusMenuBase>& InParent, const TArray<FString>& NormalizedPathNames,
+	const TSharedPtr<FEditorPlusMenuBase>& Node, const FText& FriendlyName, const FText& FriendlyTips)
+{
+	if (NormalizedPathNames.IsEmpty())
+	{
+		UE_LOG(
+			LogEditorPlus, Error, TEXT("Invalid Path: [%s]"),
+			ToCStr(FEditorPlusUtils::GetPathDelimiter() + FString::Join(NormalizedPathNames, ToCStr(FEditorPlusUtils::GetPathDelimiter()))));
+		return nullptr;
+	}
+
+	TSharedPtr<FEditorPlusMenuBase> Parent = InParent;
+
 	// Build Node
 	for (int i = 1; i < NormalizedPathNames.Num() - 1; ++i)
 	{
@@ -159,7 +177,10 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::DoRegister(
 		Parent.ToSharedRef(), NormalizedPathNames[NormalizedPathNames.Num() - 1], true, Node, FriendlyName, FriendlyTips);
 
 	// Register to LevelEditor
-	Root->AddExtension();
+	if(InParent->GetType() == EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook))
+	{
+		static_cast<FEditorPlusHook&>(InParent.Get()).AddExtension();
+	}
 
 	return Ret;
 }
@@ -200,6 +221,43 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::RegisterAction(
 		->BindAction(ExecuteAction);
 	
 	return DoRegister(NormalizedNames, Command);
+}
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::RegisterChildPath(
+	const TSharedRef<FEditorPlusMenuBase>& InParent, const FString& Path, const TSharedPtr<FEditorPlusMenuBase>& Menu)
+{
+	return DoRegister(InParent, Path, Menu);
+}
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::RegisterChildPath(
+	const TSharedRef<FEditorPlusMenuBase>& InParent, const FString& Path, const FText& FriendlyName, const FText& FriendlyTips)
+{
+	return DoRegister(InParent, Path, nullptr, FriendlyName, FriendlyTips);
+}
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::RegisterChildAction(
+	const TSharedRef<FEditorPlusMenuBase>& InParent, const FString& Path, const FExecuteAction& ExecuteAction,
+	const FName& Hook, const FText& FriendlyName, const FText& FriendlyTips)
+{
+	const auto NormalizedNames = NormalizeSplitPath(Path, false, false);
+
+	const auto TypeAneName = FEditorPlusMenuBase::GetTypeAndNameByPathName(NormalizedNames[NormalizedNames.Num() - 1]);
+
+	if(TypeAneName.Get<0>()._to_integral() != EEditorPlusMenuType::Command)
+	{
+		UE_LOG(LogEditorPlus, Error, TEXT("Invalid Path [%s] for RegisterAction, Path Leaf need to be <Command>xxx"), ToCStr(Path));
+		return nullptr;
+	}
+
+	const FName Name = FName(TypeAneName.Get<1>());
+
+	const FName InHook = Hook == EP_FNAME_HOOK_AUTO ? Name : Hook;
+
+	const auto Command = EP_NEW_MENU(FEditorPlusCommand)(
+		Name, InHook, FriendlyName, FriendlyTips)
+		->BindAction(ExecuteAction);
+
+	return DoRegister(InParent, NormalizedNames, Command);
 }
 
 
