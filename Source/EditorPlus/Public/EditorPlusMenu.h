@@ -277,7 +277,7 @@ public:
 
 	static TSharedPtr<FEditorPlusMenuBase> CreateByPathName(const FString& PathName, const FText& FriendlyName=FText::GetEmpty(), const FText& FriendlyTips=FText::GetEmpty());
 
-	virtual FText GetFriendlyText()
+	virtual FText GetFriendlyName()
 	{
 		return FriendlyName;
 	}

@@ -190,7 +190,7 @@ void FMenuTest::BuildMixMenu()
 		})	
 	));
 
-	RegisterPath("<Hook>CustomSection1/MixPath2", true, LOCTEXT("MixPath2", "MixPath2"), LOCTEXT("MixPath2Tips", "MixPath2Tips"));
+	RegisterPath("<Hook>MixSection1/MixPath2", true, LOCTEXT("MixPath2", "MixPath2"), LOCTEXT("MixPath2Tips", "MixPath2Tips"));
 }
 
 void FMenuTest::BuildExtendMenu()

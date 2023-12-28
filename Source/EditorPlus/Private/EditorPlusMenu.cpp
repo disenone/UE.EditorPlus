@@ -210,7 +210,7 @@ FEditorPlusMenuBar::~FEditorPlusMenuBar()
 void FEditorPlusMenuBar::Register(FMenuBarBuilder& MenuBarBuilder)
 {
 	MenuBarBuilder.AddPullDownMenu(
-		GetFriendlyText(),
+		GetFriendlyName(),
 		GetFriendlyTips(),
 		FEditorPlusMenuManager::GetDelegate<FNewMenuDelegate>(GetUniqueId()),
 		Hook);
@@ -234,7 +234,7 @@ void FEditorPlusMenuBar::OnMenuExtension(FMenuBuilder& MenuBuilder)
 
 void FEditorPlusSection::Register(FMenuBuilder& MenuBuilder)
 {
-	MenuBuilder.BeginSection(Hook, GetFriendlyText());
+	MenuBuilder.BeginSection(Hook, GetFriendlyName());
 	FEditorPlusMenuBase::Register(MenuBuilder);
 	MenuBuilder.EndSection();
 }
@@ -264,7 +264,7 @@ void FEditorPlusSeparator::Register(FMenuBuilder& MenuBuilder)
 void FEditorPlusSubMenu::Register(FMenuBuilder& MenuBuilder)
 {
 	MenuBuilder.AddSubMenu(
-		GetFriendlyText(),
+		GetFriendlyName(),
 		GetFriendlyTips(),
 		FNewMenuDelegate::CreateSP(this, &FEditorPlusSubMenu::MakeSubMenu),
 		false,
@@ -306,7 +306,7 @@ TSharedRef<FEditorPlusMenuBase> FEditorPlusCommand::BindAction(
 	const FSlateIcon& Icon)
 {
 	CommandInfo = MakeShared<FEditorPlusCommandInfo>(
-		Name, ExecuteAction, GetFriendlyText(), GetFriendlyTips(), Hook, Type,
+		Name, ExecuteAction, GetFriendlyName(), GetFriendlyTips(), Hook, Type,
 		Chord, Icon, GetUniqueId());
 	return AsShared();
 }
@@ -362,7 +362,7 @@ void FEditorPlusCommand::SetParentPath(const FString& ParentPath)
 void FEditorPlusWidget::Register(FMenuBuilder& MenuBuilder)
 {
 	if(Widget.IsValid())
-		MenuBuilder.AddWidget(Widget.ToSharedRef(), GetFriendlyText());
+		MenuBuilder.AddWidget(Widget.ToSharedRef(), GetFriendlyName());
 }
 
 //
