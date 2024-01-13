@@ -47,3 +47,16 @@ FText FEditorPlusUtils::CreateFText(const FString& InTextLiteral, const FString&
 	return FInternationalization::ForUseOnlyByLocMacroAndGraphNodeTextLiterals_CreateText(
 			ToCStr(InTextLiteral), *InNamespace, ToCStr(InKey));
 }
+
+
+FName FEditorPlusUtils::GenUniqueId(const FName& Tag)
+{
+	static TMap<FName, uint32> IdMap;
+
+	if (!IdMap.Contains(Tag))
+	{
+		IdMap.Add(Tag, 0);
+	}
+
+	return FName(Tag.ToString() + FString::FromInt(IdMap[Tag]++));
+}

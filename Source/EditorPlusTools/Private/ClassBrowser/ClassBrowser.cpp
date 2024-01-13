@@ -1,73 +1,76 @@
 ﻿#include "ClassBrowser.h"
 #include "ClassBrowserTab.h"
+#include "EditorPlusPath.h"
 
 DEFINE_LOG_CATEGORY(LogClassBrowser);
+#define LOCTEXT_NAMESPACE "EditorPlusTools"
 
 void FClassBrowser::OnStartup()
 {
-	if (!Tab.IsValid())
-	{
-		Tab = MakeShared<FEditorPlusTab>("ClassBrowser");
-	}
-	// Tab->Register<SClassBrowserTab>();
-	// BuildTestMenu();
-	Tab->Register(FOnSpawnTab::CreateLambda([self=SharedThis(this)](const FSpawnTabArgs& TabSpawnArgs)
-	{
-		TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
-			.TabRole(ETabRole::NomadTab)
-			.OnTabClosed(SDockTab::FOnTabClosedCallback::CreateLambda([self](TSharedRef<SDockTab>)
-			{
-				if (self->ClassBrowserTab.IsValid())
-				{
-					self->ClassBrowserTab->OnClose();
-				}
-			}))
-			[
-				SAssignNew(self->ClassBrowserTab, SClassBrowserTab)
-			];
-		return SpawnedTab;
-	}));
+	RegisterTab();
+	RegisterMenu();
 }
 
 void FClassBrowser::OnShutdown()
 {
+	UnregisterMenu();
+	UnregisterTab();
+}
+
+void FClassBrowser::RegisterTab()
+{
+	if (!Tab.IsValid())
+	{
+		Tab = MakeShared<FEditorPlusTab>(LOCTEXT("ClassBrowser", "ClassBrowser"), LOCTEXT("ClassBrowserTip", "Open the ClassBrowser"));
+		Tab->Register(FOnSpawnTab::CreateLambda([self=SharedThis(this)](const FSpawnTabArgs& TabSpawnArgs)
+		{
+			TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
+				.TabRole(ETabRole::NomadTab)
+				.OnTabClosed(SDockTab::FOnTabClosedCallback::CreateLambda([self](TSharedRef<SDockTab>)
+				{
+					if (self->ClassBrowserTab.IsValid())
+					{
+						self->ClassBrowserTab->OnClose();
+					}
+				}))
+				[
+					SAssignNew(self->ClassBrowserTab, SClassBrowserTab)
+				];
+			return SpawnedTab;
+		}));
+	}
+}
+
+void FClassBrowser::UnregisterTab()
+{
 	if (Tab.IsValid())
 	{
 		Tab->Unregister();
+		Tab.Reset();
 	}
-	DestroyTestMenu();
 }
 
-void FClassBrowser::OnBuildMenu(FMenuBuilder& MenuBuilder)
+void FClassBrowser::RegisterMenu()
 {
-	// if (!Menu.IsValid())
-	// {
-	// 	Menu = NEW_ED_MENU(FEditorPlusMenu)(
-	// 		"ClassBrowser",
-	// 		"Browser UClass, UEnum, UScriptStruct in UE",
-	// 		FExecuteAction::CreateSP(Tab.ToSharedRef(), &FEditorPlusTab::TryInvokeTab));
-	// }
-	// Menu->Register(MenuBuilder, NAME_None);
+	if (!Menu.IsValid())
+	{
+		Menu = FEditorPlusPath::RegisterPathAction(
+			"/EditorPlusTools/ClassBrowser",
+			FExecuteAction::CreateSP(Tab.ToSharedRef(), &FEditorPlusTab::TryInvokeTab),
+			EP_FNAME_HOOK_AUTO,
+			LOCTEXT("ClassBrowser", "ClassBrowser"),
+			LOCTEXT("ClassBrowserTip", "Open the ClassBrowser")
+			);
+	}
 }
 
-void FClassBrowser::OnDestroyMenu()
+void FClassBrowser::UnregisterMenu()
 {
+	if (Menu.IsValid())
+	{
+		Menu->Destroy();
+		Menu.Reset();
+	}
 }
 
-void FClassBrowser::DestroyTestMenu()
-{
-}
-
-void FClassBrowser::BuildTestMenu()
-{
-	// if (!TestMenu.IsValid())
-	// {
-	// 	TestMenu = 
-	// 	NEW_ED_MENU(FEditorPlusMenu)(
-	// 		"ClassBrowser",
-	// 		"Open the ClassBrowser Tab",
-	// 		FExecuteAction::CreateSP(Tab.ToSharedRef(), &FEditorPlusTab::TryInvokeTab))
-	// 	->AddMenuExtension(TEXT("Miscellaneous"), EExtensionHook::Before, "ClassBrowser")
-	// 	;
-	// }
-}
+#undef LOCTEXT_NAMESPACE

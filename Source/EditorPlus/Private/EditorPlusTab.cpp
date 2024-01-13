@@ -8,8 +8,8 @@ void FEditorPlusTab::Unregister()
 void FEditorPlusTab::Register(const FOnSpawnTab& SpawnTabDelegate)
 {
 	FTabSpawnerEntry& Entry = FGlobalTabmanager::Get()->RegisterNomadTabSpawner(TabId, SpawnTabDelegate)
-		.SetDisplayName(FText::FromName(TabId))
-		.SetTooltipText(FText::FromName(Desc))
+		.SetDisplayName(FriendlyName)
+		.SetTooltipText(FriendlyTips)
 		.SetMenuType(ETabSpawnerMenuType::Hidden)
 	;
 	

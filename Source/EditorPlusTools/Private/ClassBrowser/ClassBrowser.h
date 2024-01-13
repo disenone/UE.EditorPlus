@@ -11,12 +11,12 @@ class FClassBrowser: public IEditorPlusToolInterface
 public:
 	virtual void OnStartup() override;
 	virtual void OnShutdown() override;
-	virtual void OnBuildMenu(FMenuBuilder& MenuBuilder) override;
-	virtual void OnDestroyMenu() override;
-	
+
 private:
-	void BuildTestMenu();
-	void DestroyTestMenu();
+	void RegisterTab();
+	void UnregisterTab();
+	void RegisterMenu();
+	void UnregisterMenu();
 	
 	TSharedPtr<FEditorPlusTab> Tab;
 	TSharedPtr<FEditorPlusMenuBase> Menu;

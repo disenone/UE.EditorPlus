@@ -4,10 +4,8 @@ class IEditorPlusToolInterface: public TSharedFromThis<IEditorPlusToolInterface>
 {
 public:
 	virtual ~IEditorPlusToolInterface() {}
-	virtual void OnStartup() {};
-	virtual void OnShutdown() {};
-	virtual void OnBuildMenu(FMenuBuilder& MenuBuilder) {}
-	virtual void OnDestroyMenu() {}
+	virtual void OnStartup() {}
+	virtual void OnShutdown() {}
 };
 
 class IEditorPlusToolManagerInterface: public TSharedFromThis<IEditorPlusToolManagerInterface>

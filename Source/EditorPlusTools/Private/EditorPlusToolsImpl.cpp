@@ -32,7 +32,7 @@ void FEditorPlusToolsImpl::AddTools()
 #endif
 	
 #ifdef EP_ENABLE_CLASS_BROWSER
-		// Tools.Emplace(MakeShared<FClassBrowser>());
+		Tools.Emplace(MakeShared<FClassBrowser>());
 #endif
 
 		// Tools.Emplace(MakeShared<FMenuCollection>());
