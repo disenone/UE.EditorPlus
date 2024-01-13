@@ -1,5 +1,7 @@
 # UE.EditorPlus
 
+[English](README.en.md) | [简体中文](README.md)
+
 ## 介绍
 
 UnrealEngine 插件来方便扩展编辑器菜单。并增加一些实用的编辑器工具。
