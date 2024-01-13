@@ -255,7 +255,7 @@ void SClassBrowserTab::Construct(const FArguments& InArgs)
 	Style.Set(
 		"ClassBrowser.HighlightFilter",
 		FTextBlockStyle(Style.GetWidgetStyle<FTextBlockStyle>("NormalText"))
-			.SetColorAndOpacity(FLinearColor(1.0, 0.0, 0.0))
+			.SetColorAndOpacity(FLinearColor(1.0, 0.7, 0.7))
 		);
 }
 
@@ -764,5 +764,3 @@ void SClassBrowserTab::OnClose()
 	ClassNameListCache.Empty();
 	ClassInfoListCache.Empty();
 }
-
-
