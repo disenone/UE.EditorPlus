@@ -72,6 +72,9 @@ public:
 		if(HasChild(Child->GetUniqueId()))
 		{
 			OldChildren.Append(GetChildrenByUniqueId(Child->GetUniqueId()));
+			UE_LOG(
+				LogEditorPlus, Error, TEXT("Menu [%s] adding duplicate child [%s], replace to the new one."),
+				ToCStr(GetPathName()), ToCStr(Child->GetPathName()));
 		}
 				
 		Children.Emplace(Child);
@@ -209,11 +212,8 @@ public:
 		return AsShared();
 	}
 	
-	virtual void Register(FMenuBuilder& MenuBuilder);
-	virtual void Register(FMenuBarBuilder& MenuBuilder) {}
 	virtual TSharedRef<FEditorPlusMenuBase> RegisterPath();
-	virtual void Unregister();
-	
+
 	virtual FName GetName() const { return Name; }
 	virtual FName GetUniqueId() const { return FName(Path); }
 	virtual FName GetHook() const { return Hook; }
@@ -224,7 +224,8 @@ public:
 	bool IsType(const EEditorPlusMenuType& Type) const { return GetType() == Type; }
 	virtual TSharedRef<FEditorPlusMenuBase> SetFriendlyName(const FText& InFriendlyName) { FriendlyName = InFriendlyName; return AsShared(); }
 	virtual TSharedRef<FEditorPlusMenuBase> SetFriendlyTips(const FText& InFriendlyTips) { FriendlyTips = InFriendlyTips; return AsShared(); }
-
+	virtual FText GetFriendlyName()	{ return FriendlyName; }
+	virtual FText GetFriendlyTips()	{ return FriendlyTips; }
 	static FString GetTypePathTag(const EEditorPlusMenuType& Type) { return PathTagLeft + FString(Type._to_string()) + PathTagRight; }
 	static EEditorPlusMenuType GetPathTagType(FString Tag)
 	{
@@ -268,47 +269,44 @@ public:
 	
 	virtual bool AllowRole(const EEditorPlusMenuRole Role) const { return false; }
 	
-	virtual bool HasMenuExtender() const { return MenuExtender.IsValid(); }
-	virtual TSharedRef<FEditorPlusMenuBase> AddExtension(
-		const FName& ExtensionHook, const EExtensionHook::Position Position=EExtensionHook::After)
-	{
-		return AsShared();
-	}
+	virtual bool IsExtensionRegistered() const { return MenuExtender.IsValid(); }
+	virtual TSharedRef<FEditorPlusMenuBase> RegisterExtension(
+		const FName& ExtensionHook, const EExtensionHook::Position Position=EExtensionHook::After)	{ return AsShared(); }
+	virtual void UnregisterExtension();
 
-	static TSharedPtr<FEditorPlusMenuBase> CreateByPathName(const FString& PathName, const FText& FriendlyName=FText::GetEmpty(), const FText& FriendlyTips=FText::GetEmpty());
+	static TSharedPtr<FEditorPlusMenuBase> CreateByPathName(
+		const FString& PathName, const FText& FriendlyName=FText::GetEmpty(), const FText& FriendlyTips=FText::GetEmpty());
 
-	virtual FText GetFriendlyName()
-	{
-		return FriendlyName;
-	}
+	virtual FDelegateHandle SubscribePreBuildMenu(const FMenuExtensionDelegate& MenuExtensionDelegate) { return FDelegateHandle(); }
+	virtual FDelegateHandle SubscribePreBuildMenuBar(const FMenuBarExtensionDelegate& MenuBarExtensionDelegate) { return FDelegateHandle(); }
+	virtual void UnsubscribePreBuildMenu(const FDelegateHandle& InHandler) { if(PreBuildMenuSubscribers.Contains(InHandler)) PreBuildMenuSubscribers.Remove(InHandler); }
+	virtual void UnsubscribePreBuildMenuBar(const FDelegateHandle& InHandler) { if(PreBuildMenuBarSubscribers.Contains(InHandler)) PreBuildMenuBarSubscribers.Remove(InHandler); }
 
-	virtual FText GetFriendlyTips()
-	{
-		return FriendlyTips;
-	}
+	virtual void PreBuildMenu(FMenuBuilder& MenuBuilder);
+	virtual void BuildMenu(FMenuBuilder& MenuBuilder);
+	virtual void PreBuildMenuBar(FMenuBarBuilder& MenuBuilder);
+	virtual void BuildMenuBar(FMenuBarBuilder& MenuBuilder) {}
+
 protected:
-	
-	virtual void RemoveMenuExtension();
+
+	virtual void RegisterMenuExtension(const FName& ExtensionHook, const EExtensionHook::Position Position);
 	virtual void OnMenuExtension(FMenuBuilder& MenuBuilder);
 	virtual void OnMenuModuleChanged(FName ModuleThatChanged, EModuleChangeReason ReasonForChange);
+	virtual FDelegateHandle DoSubscribePreBuildMenu(const FMenuExtensionDelegate& MenuExtensionDelegate)
+	{
+		const auto Handler = FDelegateHandle(FDelegateHandle::GenerateNewHandle);
+		PreBuildMenuSubscribers[Handler] = MenuExtensionDelegate;
+		return Handler;
+	}
 
-	virtual void RemoveMenuBarExtension();
+	virtual void RegisterMenuBarExtension(const FName& ExtensionHook, const EExtensionHook::Position Position);
 	virtual void OnMenuBarExtension(FMenuBarBuilder& MenuBarBuilder);
 	virtual void OnMenuBarModuleChanged(FName ModuleThatChanged, EModuleChangeReason ReasonForChange);
-	
-	virtual void DoAddMenuExtension(const FName& ExtensionHook, const EExtensionHook::Position Position);
-	virtual void DoAddMenuBarExtension(const FName& ExtensionHook, const EExtensionHook::Position Position);
-
-	virtual TSharedRef<FEditorPlusMenuBase> AddMenuExtension(const FName& ExtensionHook, const EExtensionHook::Position Position)
+	virtual FDelegateHandle DoSubscribePreBuildMenuBar(const FMenuBarExtensionDelegate& MenuBarExtensionDelegate)
 	{
-		DoAddMenuExtension(ExtensionHook, Position);
-		return AsShared();
-	}
-	
-	virtual TSharedRef<FEditorPlusMenuBase> AddMenuBarExtension(const FName& ExtensionHook, const EExtensionHook::Position Position)
-	{
-		DoAddMenuBarExtension(ExtensionHook, Position);
-		return AsShared();
+		const auto Handler = FDelegateHandle(FDelegateHandle::GenerateNewHandle);
+		PreBuildMenuBarSubscribers[Handler] = MenuBarExtensionDelegate;
+		return Handler;
 	}
 
 public:
@@ -337,7 +335,7 @@ protected:
 	// is destroyed
 	bool Destroyed = false;
 	
-	// my extender to hook other menu
+	// my extender to hook editor
 	TSharedPtr<FExtender> MenuExtender;
 
 	// callback when module changed (reload)
@@ -345,14 +343,18 @@ protected:
 
 	// sub menus
 	TArray<TSharedRef<FEditorPlusMenuBase>> Children;
+
+	// subscribe delegate
+	TMap<FDelegateHandle, FMenuExtensionDelegate> PreBuildMenuSubscribers;
+	TMap<FDelegateHandle, FMenuBarExtensionDelegate> PreBuildMenuBarSubscribers;
 };
 
 
 // Root node, no children
-class EDITORPLUS_API TEditorPlusMenuBaseRoot: public FEditorPlusMenuBase
+class EDITORPLUS_API FEditorPlusMenuBaseRoot: public FEditorPlusMenuBase
 {
 public:
-	explicit TEditorPlusMenuBaseRoot(
+	explicit FEditorPlusMenuBaseRoot(
 		const FName& InName, const FName& InHook = NAME_None,
 		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
 		: FEditorPlusMenuBase(InName, InHook, InFriendlyName, InFriendlyTips) {}	
@@ -365,10 +367,10 @@ public:
 
 
 // Root node, no children
-class EDITORPLUS_API TEditorPlusMenuBaseNode: public FEditorPlusMenuBase
+class EDITORPLUS_API FEditorPlusMenuBaseNode: public FEditorPlusMenuBase
 {
 public:
-	explicit TEditorPlusMenuBaseNode(
+	explicit FEditorPlusMenuBaseNode(
 		const FName& InName, const FName& InHook = NAME_None,
 		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
 		: FEditorPlusMenuBase(InName, InHook, InFriendlyName, InFriendlyTips) {}	
@@ -381,10 +383,10 @@ public:
 
 
 // Leaf node, no children
-class EDITORPLUS_API TEditorPlusMenuBaseLeaf: public FEditorPlusMenuBase
+class EDITORPLUS_API FEditorPlusMenuBaseLeaf: public FEditorPlusMenuBase
 {
 public:
-	explicit TEditorPlusMenuBaseLeaf(
+	explicit FEditorPlusMenuBaseLeaf(
 		const FName& InName, const FName& InHook = NAME_None,
 		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
 		: FEditorPlusMenuBase(InName, InHook, InFriendlyName, InFriendlyTips) {}	
@@ -402,10 +404,10 @@ private:
 };
 
 
-class EDITORPLUS_API FEditorPlusHook: public TEditorPlusMenuBaseRoot
+class EDITORPLUS_API FEditorPlusHook: public FEditorPlusMenuBaseRoot
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseRoot;
+	using FBaseType = FEditorPlusMenuBaseRoot;
 	
 	explicit FEditorPlusHook(const FName& Name): FBaseType(Name, Name)
 	{
@@ -415,18 +417,18 @@ public:
 	virtual EEditorPlusMenuType GetType() const override { return StaticType(); }
 	static EEditorPlusMenuType StaticType() { return EEditorPlusMenuType::Hook; }
 
-	virtual TSharedRef<FEditorPlusMenuBase> AddExtension(const EExtensionHook::Position Position=EExtensionHook::After)
+	virtual TSharedRef<FEditorPlusMenuBase> RegisterExtension(const EExtensionHook::Position Position=EExtensionHook::After)
 	{
-		return AddExtension(Hook, Position);
+		return RegisterExtension(Hook, Position);
 	}
-	
-	virtual TSharedRef<FEditorPlusMenuBase> AddExtension(
+
+	virtual TSharedRef<FEditorPlusMenuBase> RegisterExtension(
 		const FName& ExtensionHook, const EExtensionHook::Position Position=EExtensionHook::After) override
 	{
 		for (const auto Child: Children)
 		{
-			if(!Child->HasMenuExtender())
-				Child->AddExtension(ExtensionHook, Position);
+			if(!Child->IsExtensionRegistered())
+				Child->RegisterExtension(ExtensionHook, Position);
 		}
 		return AsShared();
 	}
@@ -441,29 +443,26 @@ public:
 };
 
 
-class EDITORPLUS_API FEditorPlusMenuBar: public TEditorPlusMenuBaseNode
+class EDITORPLUS_API FEditorPlusMenuBar: public FEditorPlusMenuBaseNode
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseNode;
+	using FBaseType = FEditorPlusMenuBaseNode;
 	
 	explicit FEditorPlusMenuBar(
 		const FName& InName, const FName& InHook = NAME_None,
 		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
 		: FBaseType(InName, InHook, InFriendlyName, InFriendlyTips) {}	
 		
-	virtual ~FEditorPlusMenuBar() override;
-	
-	virtual void Register(FMenuBarBuilder& MenuBarBuilder) override;
+	virtual void BuildMenuBar(FMenuBarBuilder& MenuBarBuilder) override;
 
 	virtual EEditorPlusMenuType GetType() const override { return StaticType(); }
 	static EEditorPlusMenuType StaticType() { return EEditorPlusMenuType::MenuBar; }
 	
-	using FBaseType::AddMenuBarExtension;
-	using FBaseType::RemoveMenuBarExtension;
-	virtual TSharedRef<FEditorPlusMenuBase> AddExtension(
+	virtual TSharedRef<FEditorPlusMenuBase> RegisterExtension(
 		const FName& ExtensionHook, const EExtensionHook::Position Position) override
 	{
-		return AddMenuBarExtension(ExtensionHook, Position);
+		RegisterMenuBarExtension(ExtensionHook, Position);
+		return AsShared();
 	}
 
 	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override
@@ -474,31 +473,36 @@ public:
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuBar)
 		;
 	}
+
+	virtual FDelegateHandle SubscribePreBuildMenuBar(const FMenuBarExtensionDelegate& MenuExtensionDelegate) override
+	{
+		return DoSubscribePreBuildMenuBar(MenuExtensionDelegate);
+	}
+
 protected:
 	virtual void OnMenuExtension(FMenuBuilder& MenuBuilder) override;
 };
 
 
-class EDITORPLUS_API FEditorPlusSection: public TEditorPlusMenuBaseNode
+class EDITORPLUS_API FEditorPlusSection: public FEditorPlusMenuBaseNode
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseNode;
+	using FBaseType = FEditorPlusMenuBaseNode;
 	
 	explicit FEditorPlusSection(
 		const FName& InName, const FName& InHook = NAME_None,
 		const FText& InFriendlyName=FText::GetEmpty())
 		: FBaseType(InName, InHook, InFriendlyName) {}	
 	
-	virtual void Register(FMenuBuilder& MenuBuilder) override;
+	virtual void BuildMenu(FMenuBuilder& MenuBuilder) override;
 
 	virtual EEditorPlusMenuType GetType() const override { return StaticType(); }
 	static EEditorPlusMenuType StaticType() { return EEditorPlusMenuType::Section; }
 
-	using FBaseType::AddMenuExtension;
-	using FBaseType::RemoveMenuExtension;
-	virtual TSharedRef<FEditorPlusMenuBase> AddExtension(const FName& ExtensionHook, const EExtensionHook::Position Position) override
+	virtual TSharedRef<FEditorPlusMenuBase> RegisterExtension(const FName& ExtensionHook, const EExtensionHook::Position Position) override
 	{
-		return AddMenuExtension(ExtensionHook, Position);
+		RegisterMenuExtension(ExtensionHook, Position);
+		return AsShared();
 	}
 
 	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override
@@ -510,28 +514,32 @@ public:
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Section)
 		;
 	}
+
+	virtual FDelegateHandle SubscribePreBuildMenu(const FMenuExtensionDelegate& MenuExtensionDelegate) override
+	{
+		return DoSubscribePreBuildMenu(MenuExtensionDelegate);
+	}
 };
 
 
-class EDITORPLUS_API FEditorPlusSeparator: public TEditorPlusMenuBaseNode
+class EDITORPLUS_API FEditorPlusSeparator: public FEditorPlusMenuBaseNode
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseNode;
+	using FBaseType = FEditorPlusMenuBaseNode;
 	
 	explicit FEditorPlusSeparator(const FName& Hook=NAME_None): FBaseType(Hook, Hook) {}
 	
-	virtual void Register(FMenuBuilder& MenuBuilder) override;
+	virtual void BuildMenu(FMenuBuilder& MenuBuilder) override;
 	
 	virtual EEditorPlusMenuType GetType() const override { return StaticType(); }
 	static EEditorPlusMenuType StaticType() { return EEditorPlusMenuType::Separator; }
 	
-	using FBaseType::AddMenuExtension;
-	using FBaseType::RemoveMenuExtension;
-	virtual TSharedRef<FEditorPlusMenuBase> AddExtension(const FName& ExtensionHook, const EExtensionHook::Position Position) override
+	virtual TSharedRef<FEditorPlusMenuBase> RegisterExtension(const FName& ExtensionHook, const EExtensionHook::Position Position) override
 	{
-		return AddMenuExtension(ExtensionHook, Position);
+		RegisterMenuExtension(ExtensionHook, Position);
+		return AsShared();
 	}
-	
+
 	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override
 	{
 		const auto Type = Child->GetType();
@@ -540,29 +548,33 @@ public:
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuBar)
 		;
 	}
+
+	virtual FDelegateHandle SubscribePreBuildMenu(const FMenuExtensionDelegate& MenuExtensionDelegate) override
+	{
+		return DoSubscribePreBuildMenu(MenuExtensionDelegate);
+	}
 };
 
 
-class EDITORPLUS_API FEditorPlusSubMenu: public TEditorPlusMenuBaseNode
+class EDITORPLUS_API FEditorPlusSubMenu: public FEditorPlusMenuBaseNode
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseNode;
+	using FBaseType = FEditorPlusMenuBaseNode;
 	
 	explicit FEditorPlusSubMenu(
 		const FName& InName, const FName& InHook = NAME_None,
 		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
 		: FBaseType(InName, InHook, InFriendlyName, InFriendlyTips) {}			
 		
-	virtual void Register(FMenuBuilder& MenuBuilder) override;
+	virtual void BuildMenu(FMenuBuilder& MenuBuilder) override;
 	
 	virtual EEditorPlusMenuType GetType() const override { return StaticType(); }
 	static EEditorPlusMenuType StaticType() { return EEditorPlusMenuType::SubMenu; }
 	
-	using FBaseType::AddMenuExtension;
-	using FBaseType::RemoveMenuExtension;
-	virtual TSharedRef<FEditorPlusMenuBase> AddExtension(const FName& ExtensionHook, const EExtensionHook::Position Position) override
+	virtual TSharedRef<FEditorPlusMenuBase> RegisterExtension(const FName& ExtensionHook, const EExtensionHook::Position Position) override
 	{
-		return AddMenuExtension(ExtensionHook, Position);
+		RegisterMenuExtension(ExtensionHook, Position);
+		return AsShared();
 	}
 
 	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override
@@ -573,63 +585,62 @@ public:
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuBar)
 		;
 	}
+
+	virtual FDelegateHandle SubscribePreBuildMenu(const FMenuExtensionDelegate& MenuExtensionDelegate) override
+	{
+		return DoSubscribePreBuildMenu(MenuExtensionDelegate);
+	}
 protected:
-	void MakeSubMenu(FMenuBuilder& MenuBuilder);
+	virtual void MakeSubMenu(FMenuBuilder& MenuBuilder);
 };
 
 
-class EDITORPLUS_API FEditorPlusCommand: public TEditorPlusMenuBaseLeaf
+class EDITORPLUS_API FEditorPlusCommand: public FEditorPlusMenuBaseLeaf
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseLeaf;
+	using FBaseType = FEditorPlusMenuBaseLeaf;
 
 	explicit FEditorPlusCommand(
 		const FName& InName, const FName& InHook = NAME_None,
 		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
 		: FBaseType(InName, InHook, InFriendlyName, InFriendlyTips) {}
 	
-	virtual ~FEditorPlusCommand() override;
-	
 	TSharedRef<FEditorPlusMenuBase> BindAction(
 		const FExecuteAction& ExecuteAction,
 		const EUserInterfaceActionType& Type = EUserInterfaceActionType::Button,
-		const FInputChord& Chord = FInputChord(),
 		const FSlateIcon& Icon = FSlateIcon());
 	
-	TSharedRef<FEditorPlusMenuBase> BindAction(
-		const TSharedRef<IEditorPlusCommandsInterface>& CommandMgr,
-		const FExecuteAction& ExecuteAction,
-		const EUserInterfaceActionType& Type = EUserInterfaceActionType::Button,
-		const FInputChord& Chord = FInputChord(),
-		const FSlateIcon& Icon = FSlateIcon());
+	TSharedRef<FEditorPlusMenuBase> BindCommand(
+		const TSharedRef<FUICommandInfo>& InCommandInfo,
+		const TSharedRef<FUICommandList>& InCommandList);
 	
-	virtual void Register(FMenuBuilder& MenuBuilder) override;
-	virtual void Unregister() override;
+	virtual void BuildMenu(FMenuBuilder& MenuBuilder) override;
 
 	virtual EEditorPlusMenuType GetType() const override { return StaticType(); }
 	static EEditorPlusMenuType StaticType() { return EEditorPlusMenuType::Command; }
 
-	using FBaseType::AddMenuExtension;
-	using FBaseType::RemoveMenuExtension;
-	virtual TSharedRef<FEditorPlusMenuBase> AddExtension(const FName& ExtensionHook, const EExtensionHook::Position Position) override
+	virtual TSharedRef<FEditorPlusMenuBase> RegisterExtension(const FName& ExtensionHook, const EExtensionHook::Position Position) override
 	{
-		return AddMenuExtension(ExtensionHook, Position);
+		RegisterMenuExtension(ExtensionHook, Position);
+		return AsShared();
 	}
 
-	virtual void SetParentPath(const FString& ParentPath) override;
-
 	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override { return false; }
+
+	virtual FDelegateHandle SubscribePreBuildMenu(const FMenuExtensionDelegate& MenuExtensionDelegate) override
+	{
+		return DoSubscribePreBuildMenu(MenuExtensionDelegate);
+	}
 protected:
 	
 	TSharedPtr<FEditorPlusCommandInfo> CommandInfo;
-	TSharedPtr<IEditorPlusCommandsInterface> CommandMgr;
 };
 
 
-class EDITORPLUS_API FEditorPlusWidget: public TEditorPlusMenuBaseLeaf
+class EDITORPLUS_API FEditorPlusWidget: public FEditorPlusMenuBaseLeaf
 {
 public:
-	using FBaseType = TEditorPlusMenuBaseLeaf;
+	using FBaseType = FEditorPlusMenuBaseLeaf;
 
 	explicit FEditorPlusWidget(const FName& InName, const FText& InFriendlyName=FText::GetEmpty())
 		: FBaseType(InName, NAME_None, InFriendlyName)
@@ -640,19 +651,23 @@ public:
 	
 	TSharedRef<FEditorPlusMenuBase> BindWidget(const TSharedRef<SWidget>& _Widget) { this->Widget = _Widget; return AsShared(); }
 	
-	virtual void Register(FMenuBuilder& MenuBuilder) override;
+	virtual void BuildMenu(FMenuBuilder& MenuBuilder) override;
 	
 	virtual EEditorPlusMenuType GetType() const override { return StaticType(); }
 	static EEditorPlusMenuType StaticType() { return EEditorPlusMenuType::Command; }
 
-	using FBaseType::AddMenuExtension;
-	using FBaseType::RemoveMenuExtension;
-	virtual TSharedRef<FEditorPlusMenuBase> AddExtension(const FName& ExtensionHook, const EExtensionHook::Position Position) override
+	virtual TSharedRef<FEditorPlusMenuBase> RegisterExtension(const FName& ExtensionHook, const EExtensionHook::Position Position) override
 	{
-		return AddMenuExtension(ExtensionHook, Position);
+		RegisterMenuExtension(ExtensionHook, Position);
+		return AsShared();
 	}
 
 	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override { return false; }
+
+	virtual FDelegateHandle SubscribePreBuildMenu(const FMenuExtensionDelegate& MenuExtensionDelegate) override
+	{
+		return DoSubscribePreBuildMenu(MenuExtensionDelegate);
+	}
 protected:
 	TSharedPtr<SWidget> Widget;
 };

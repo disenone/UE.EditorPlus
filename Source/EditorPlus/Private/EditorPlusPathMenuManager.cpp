@@ -179,7 +179,7 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusPathMenuManager::DoRegister(
 	// Register to LevelEditor
 	if(InParent->GetType() == EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook))
 	{
-		static_cast<FEditorPlusHook&>(InParent.Get()).AddExtension();
+		static_cast<FEditorPlusHook&>(InParent.Get()).RegisterExtension();
 	}
 
 	return Ret;
@@ -317,7 +317,7 @@ bool FEditorPlusPathMenuManager::RemoveNode(
 		{
 			if(Child->IsEmpty())
 			{
-				Child->Unregister();
+				Child->Destroy();
 				Parent->RemoveChild(Child);
 			}
 			return true;
@@ -362,7 +362,7 @@ bool FEditorPlusPathMenuManager::Unregister(const FString& Path, const FName& Un
 	{
 		if(RootMap.Contains(RootName) && RootMap[RootName]->IsEmpty())
 		{
-			RootMap[RootName]->Unregister();	
+			RootMap[RootName]->Destroy();
 			RootMap.Remove(RootName);
 		}
 		return true;

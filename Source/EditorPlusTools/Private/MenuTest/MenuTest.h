@@ -19,6 +19,7 @@ private:
 	
 	TArray<TSharedPtr<FEditorPlusMenuBase>> Menus;
 	TSharedPtr<SEditableTextBox> InputText;
+	TSharedPtr<FUICommandList> CommandList;
 };
 
 DECLARE_LOG_CATEGORY_EXTERN(LogMenuTest, Display, All);

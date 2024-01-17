@@ -6,7 +6,7 @@
 
 class SClassBrowserTab;
 
-class FClassBrowser: public IEditorPlusToolInterface
+class FClassBrowser final: public IEditorPlusToolInterface
 {
 public:
 	virtual void OnStartup() override;

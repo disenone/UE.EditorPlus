@@ -7,17 +7,28 @@ DEFINE_LOG_CATEGORY(LogMenuTest);
 
 #define LOCTEXT_NAMESPACE "EditorPlusTools"
 
-class FMenuTestCommands: public TEditorPlusCommands<FMenuTestCommands>
+class FMenuTestCommands : public TCommands<FMenuTestCommands>
 {
 public:
 	FMenuTestCommands()
-		: TEditorPlusCommands<FMenuTestCommands>(
-			TEXT("MenuTest"),
-			TEXT("MenuTest"),
-			NAME_None,
-			FAppStyle::GetAppStyleSetName())
+	: TCommands
+		(
+			"MenuTest", // Context name for fast lookup
+			LOCTEXT("FMenuTestCommands", "FMenuTestCommands"), // Localized context name for displaying
+			"LevelEditor", // Parent
+			FAppStyle::GetAppStyleSetName() // Icon Style Set
+		)
 	{}
+
+	virtual void RegisterCommands() override
+	{
+		UI_COMMAND(Command6, "Command6", "Command6 Tips", EUserInterfaceActionType::Button, FInputChord());
+	}
+
+	TSharedPtr<FUICommandInfo> Command6;
+
 };
+
 
 void FMenuTest::OnStartup()
 {
@@ -101,6 +112,11 @@ FReply FMenuTest::OnClickButton() const
 
 void FMenuTest::BuildCustomMenu()
 {
+	FMenuTestCommands::Register();
+	auto Commands = FMenuTestCommands::Get();
+	CommandList = MakeShared<FUICommandList>();
+	CommandList->MapAction(Commands.Command6, CreateClickLambda("Custom Command6"));
+
 	Menus.Push( 
 		EP_NEW_MENU(FEditorPlusMenuBar)("MenuTestCustom", NAME_None, LOCTEXT("MenuTestCustom", "MenuTestCustom"), LOCTEXT("MenuTestCustomTips", "MenuTestCustomTips"))
 		->RegisterPath()
@@ -124,11 +140,6 @@ void FMenuTest::BuildCustomMenu()
 				EP_NEW_MENU(FEditorPlusCommand)("Command4", NAME_None, LOCTEXT("Command4", "Command4"), LOCTEXT("Command4Tips", "Command4Tips"))
 				->BindAction(CreateClickLambda("Custom Command4")),
 				
-				EP_NEW_MENU(FEditorPlusCommand)("Command5", NAME_None, LOCTEXT("Command5", "Command5"), LOCTEXT("Command5Tips", "Command5Tips"))
-				->BindAction(
-					FMenuTestCommands::Get(),
-					CreateClickLambda("Custom Command5")),
-				
 				EP_NEW_MENU(FEditorPlusWidget)("CustomWidget", LOCTEXT("CustomWidget", "CustomWidget"))
 				->BindWidget(
 					SNew(SHorizontalBox)
@@ -150,9 +161,9 @@ void FMenuTest::BuildCustomMenu()
 					),
 				
 				EP_NEW_MENU(FEditorPlusCommand)("Command6", NAME_None, LOCTEXT("Command6", "Command6"), LOCTEXT("Command6Tips", "Command6Tips"))
-				->BindAction(
-					FMenuTestCommands::Get(),
-					CreateClickLambda("Custom Command6")),
+				->BindCommand(
+					Commands.Command6.ToSharedRef(),
+					CommandList.ToSharedRef())
 			})
 	}));
 

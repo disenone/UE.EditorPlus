@@ -40,14 +40,10 @@ protected:
 	FEditorPlusToolsImpl(const FEditorPlusToolsImpl&) = delete;
 	FEditorPlusToolsImpl& operator=(const FEditorPlusToolsImpl&) = delete;
 	
-	void BuildMenu();
-	void DestroyMenu();
 	void RegisterConsoleCommand();
 	
 private:
 	static TWeakPtr<FEditorPlusToolsImpl> Instance;
 	
-	TSharedPtr<FEditorPlusMenuBase> Menu;
-
 	template <typename ObjectType, ESPMode Mode> friend class SharedPointerInternals::TIntrusiveReferenceController;
 };
