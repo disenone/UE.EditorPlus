@@ -377,20 +377,21 @@ void SClassBrowserTab::UpdateClassNameListItems()
 	
 	if (!FilterStr.IsEmpty())
 	{
-		const FString PatternStr = TEXT(".*?") + FString::Join(FilterStr, TEXT(".*?")) + TEXT(".*?");
-		const std::wregex Pattern	= std::wregex(ToCStr(PatternStr), std::regex::icase);
+		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FilterStr, TEXT(".*?")) + TEXT(")(.*)");
+		const std::wregex Pattern = std::wregex(TCHAR_TO_WCHAR(ToCStr(PatternStr)), std::regex::icase);
 		using FMatchItemType = TTuple<uint16, uint16, TSharedPtr<FClassNameListItem>>; 
 		TArray<FMatchItemType> MatchItems;
 	
 		for (TSharedPtr<FClassNameListItem> Item: ClassNameListCache)
 		{
-			std::wcmatch MatchResult;
-			if (!std::regex_match(ToCStr(Item->GetName()), MatchResult, Pattern)) continue;
+			std::wsmatch MatchResult;
+			const std::wstring SearchText(TCHAR_TO_WCHAR(ToCStr(Item->GetName())));
+			if (!std::regex_match(SearchText, MatchResult, Pattern)) continue;
 
 			if (MatchResult.empty() || !MatchResult.ready()) continue;
 
 			MatchItems.Push(MakeTuple<uint16, uint16, TSharedPtr<FClassNameListItem>>(
-				MatchResult.length(0) + MatchResult.prefix().length(), MatchResult.prefix().length(), Item.ToSharedRef()));
+				MatchResult[1].length(), MatchResult[2].length(), Item.ToSharedRef()));
 		}
 
 		if (!MatchItems.IsEmpty())
@@ -402,9 +403,9 @@ void SClassBrowserTab::UpdateClassNameListItems()
 					return a.Get<0>() < b.Get<0>();
 				}
 
-				if (a.Get<0>() != b.Get<0>())
+				if (a.Get<1>() != b.Get<1>())
 				{
-					return a.Get<0>() < b.Get<0>();
+					return a.Get<1>() < b.Get<1>();
 				}
 				return a.Get<2>()->GetName() < b.Get<2>()->GetName();
 			});
@@ -615,19 +616,20 @@ void SClassBrowserTab::UpdateClassInfoListItems()
 	
 	if (!FilterStr.IsEmpty())
 	{
-		const FString PatternStr = TEXT(".*?") + FString::Join(FilterStr, TEXT(".*?")) + TEXT(".*?");
-		const std::wregex Pattern	= std::wregex(ToCStr(PatternStr), std::regex::icase);
+		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FilterStr, TEXT(".*?")) + TEXT(")(.*)");
+		const std::wregex Pattern = std::wregex(TCHAR_TO_WCHAR(ToCStr(PatternStr)), std::regex::icase);
 		using FMatchItemType = TTuple<uint16, uint16, TSharedPtr<FClassInfoListItem>>; 
 		TArray<FMatchItemType> MatchItems;
 		for (auto Item: ClassInfoListItems)
 		{
-			std::wcmatch MatchResult;
-			if (!std::regex_match(ToCStr(Item->GetName()), MatchResult, Pattern)) continue;
+			std::wsmatch MatchResult;
+			const std::wstring SearchText(TCHAR_TO_WCHAR(ToCStr(Item->GetName())));
+			if (!std::regex_match(SearchText, MatchResult, Pattern)) continue;
 
 			if (MatchResult.empty() || !MatchResult.ready()) continue;
 
 			MatchItems.Push(MakeTuple<uint16, uint16, TSharedPtr<FClassInfoListItem>>(
-				MatchResult.length(0) + MatchResult.prefix().length(), MatchResult.prefix().length(), Item.ToSharedRef()));
+				MatchResult[1].length(), MatchResult[2].length(), Item.ToSharedRef()));
 		}
 		MatchItems.Sort([](FMatchItemType One, FMatchItemType Another)
 		{
@@ -636,9 +638,9 @@ void SClassBrowserTab::UpdateClassInfoListItems()
 				return One.Get<0>() < Another.Get<0>();
 			}
 
-			if (One.Get<0>() != Another.Get<0>())
+			if (One.Get<1>() != Another.Get<1>())
 			{
-				return One.Get<0>() < Another.Get<0>();
+				return One.Get<1>() < Another.Get<1>();
 			}
 			return One.Get<2>()->GetName() < Another.Get<2>()->GetName();
 		});
