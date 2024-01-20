@@ -40,7 +40,7 @@ void FMenuCollection::BuildMenu()
 	// | Collections
 
 	// <Section> MenuCollection
-	Menu = FEditorPlusPath::RegisterPath("/EditorPlusTools/<Section>MenuCollection");
+	Menu = FEditorPlusPath::RegisterPath("/<MenuBar>EditorPlusTools/<Section>MenuCollection");
 	Menu->SetFriendlyName(LOCTEXT("MenuCollection", "MenuCollection"));
 	Menu->SubscribePreBuildMenu(FMenuExtensionDelegate::CreateSP(this, &FMenuCollection::OnPreShowMenu));
 

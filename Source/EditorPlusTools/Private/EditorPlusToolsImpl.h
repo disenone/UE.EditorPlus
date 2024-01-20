@@ -43,6 +43,8 @@ protected:
 	void RegisterConsoleCommand();
 	
 private:
+	TSharedPtr<FEditorPlusMenuBase> Root;
+
 	static TWeakPtr<FEditorPlusToolsImpl> Instance;
 	
 	template <typename ObjectType, ESPMode Mode> friend class SharedPointerInternals::TIntrusiveReferenceController;

@@ -2,10 +2,12 @@
 
 #include "EditorPlusToolsImpl.h"
 
+#include "EditorPlusPath.h"
 #include "MenuTest/MenuTest.h"
 #include "ClassBrowser/ClassBrowser.h"
 #include "MenuCollection/MenuCollection.h"
 
+#define LOCTEXT_NAMESPACE "EditorPlusTools"
 
 TWeakPtr<FEditorPlusToolsImpl> FEditorPlusToolsImpl::Instance = nullptr;
 
@@ -22,6 +24,14 @@ void FEditorPlusToolsImpl::ShutdownTools()
 
 void FEditorPlusToolsImpl::AddTools()
 {
+	if (!Root.IsValid())
+	{
+		Root = FEditorPlusPath::RegisterPath(
+			"/<MenuBar>EditorPlusTools",
+			LOCTEXT("EditorPlusTools", "EditorPlusTools"),
+			LOCTEXT("EditorPlusToolsTips", "Useful tools for editor"));
+	}
+
 	if (!Tools.Num())
 	{
 		
@@ -42,3 +52,5 @@ void FEditorPlusToolsImpl::AddTools()
 void FEditorPlusToolsImpl::RegisterConsoleCommand()
 {
 }
+
+#undef LOCTEXT_NAMESPACE

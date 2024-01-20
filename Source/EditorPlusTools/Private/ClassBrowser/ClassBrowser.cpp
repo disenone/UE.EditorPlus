@@ -55,7 +55,7 @@ void FClassBrowser::RegisterMenu()
 	if (!Menu.IsValid())
 	{
 		Menu = FEditorPlusPath::RegisterPathAction(
-			"/EditorPlusTools/ClassBrowser",
+			"/<MenuBar>EditorPlusTools/<Command>ClassBrowser",
 			FExecuteAction::CreateSP(Tab.ToSharedRef(), &FEditorPlusTab::TryInvokeTab),
 			EP_FNAME_HOOK_AUTO,
 			LOCTEXT("ClassBrowser", "ClassBrowser"),
