@@ -32,7 +32,19 @@ FEditorPlusPath::RegisterPathAction(
 
 ### ClassBrowser
 
+类浏览器
+
+![](Resources/classbrowser_menu.png)
+
 ![](Resources/classbrowser.png)
+
+### MenuCollection
+
+编辑器菜单命令快速查找和收藏
+
+![](Resources/menucollection_find.png)
+
+![](Resources/menucollection_star.png)
 
 
 ## TODO

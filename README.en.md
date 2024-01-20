@@ -32,4 +32,14 @@ FEditorPlusPath::RegisterPathAction(
 
 ### ClassBrowser
 
+![](Resources/classbrowser_menu.png)
+
 ![](Resources/classbrowser.png)
+
+### MenuCollection
+
+Quickly find and collect editor menu commands
+
+![](Resources/menucollection_find.png)
+
+![](Resources/menucollection_star.png)
