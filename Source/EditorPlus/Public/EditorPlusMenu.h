@@ -295,7 +295,7 @@ protected:
 	virtual FDelegateHandle DoSubscribePreBuildMenu(const FMenuExtensionDelegate& MenuExtensionDelegate)
 	{
 		const auto Handler = FDelegateHandle(FDelegateHandle::GenerateNewHandle);
-		PreBuildMenuSubscribers[Handler] = MenuExtensionDelegate;
+		PreBuildMenuSubscribers.Add(Handler, MenuExtensionDelegate);
 		return Handler;
 	}
 
@@ -305,7 +305,7 @@ protected:
 	virtual FDelegateHandle DoSubscribePreBuildMenuBar(const FMenuBarExtensionDelegate& MenuBarExtensionDelegate)
 	{
 		const auto Handler = FDelegateHandle(FDelegateHandle::GenerateNewHandle);
-		PreBuildMenuBarSubscribers[Handler] = MenuBarExtensionDelegate;
+		PreBuildMenuBarSubscribers.Add(Handler, MenuBarExtensionDelegate);
 		return Handler;
 	}
 

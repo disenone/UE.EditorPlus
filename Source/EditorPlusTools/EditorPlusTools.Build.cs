@@ -11,6 +11,7 @@ public class EditorPlusTools : ModuleRules
 		PrivateDefinitions.AddRange(
 			new string[] {
 				"EP_ENABLE_CLASS_BROWSER",
+				"EP_ENABLE_MENU_COLLECTION",
 			}
 			);
 
@@ -63,7 +64,12 @@ public class EditorPlusTools : ModuleRules
 				"ComponentVisualizers",
 				"EditorPlus",
 				"ToolMenus",
-				// ... add private dependencies that you statically link with here ...	
+				"DeveloperSettings",
+				"DeveloperToolSettings",
+				"EditorSubsystem",
+				"EditorFramework",
+				"Projects",
+				// ... add private dependencies that you statically link with here ...
 			}
 			);
 		

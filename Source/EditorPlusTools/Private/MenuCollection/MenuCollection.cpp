@@ -1,96 +1,305 @@
 ﻿#include "MenuCollection.h"
+#include "EditorPlusPath.h"
 #include "EditorPlusUtils.h"
+#include <regex>
+
+#include "MenuItem.h"
+#include "Interfaces/IPluginManager.h"
 
 DEFINE_LOG_CATEGORY(LogMenuCollection);
+
+#define LOCTEXT_NAMESPACE "EditorPlusTools"
+
+
+FMenuCollection::FMenuCollection()
+{
+	InitIcon();
+}
+
 
 void FMenuCollection::OnStartup()
 {
 	BuildMenu();
-	// BuildSubMenu();
-	// RegisterConsoleCommand();
-	// BuildPathMenu();
 }
 
 void FMenuCollection::OnShutdown()
 {
+	if (!Menu.IsValid()) return;
+
+	Menu->Destroy();
+	Menu.Reset();
 }
 
 void FMenuCollection::BuildMenu()
 {
 	if (Menu.IsValid()) return;
 
-	// Menu = 
-	// 	NEW_ED_MENU(FEditorPlusSubMenu)("SubMenuTest", "Open the MenuTest Menu", "MenuTest")
-	// 	->AddMenuExtension(TEXT("OpenPython"), EExtensionHook::After)
-	// 	;
-	//
-	// Menu->AddChildren({
-	// NEW_ED_MENU(FEditorPlusSection)("Section 1", "Section 1")
-	// ->Content({
-	// 	NEW_ED_MENU(FEditorPlusMenu)(
-	// 		"Command1",
-	// 		"Command1 tips",
-	// 		FExecuteAction::CreateLambda([]
-	// 			{
-	// 				UE_LOG(LogMenuCollection, Display, TEXT("clicked Command1"));
-	// 			}),
-	// 		"Command1"),
-	// 	NEW_ED_MENU(FEditorPlusMenu)(
-	// 		"Command2",
-	// 		"Command2 tips",
-	// 		FExecuteAction::CreateLambda([]
-	// 			{
-	// 				UE_LOG(LogMenuCollection, Display, TEXT("clicked Command2"));
-	// 			}),
-	// 		"Command2"),
-	// }),
-	// NEW_ED_MENU(FEditorPlusSeparator)("Separator1"),
-	// NEW_ED_MENU(FEditorPlusSubMenu)("Sub Menu 1", "Open the Sub Menu 1", "Sub Menu 1")
-	// ->Content({
-	// 	NEW_ED_MENU(FEditorPlusMenu)(
-	// 		"Command3",
-	// 		"Command3 tips",
-	// 		FExecuteAction::CreateLambda([]
-	// 			{
-	// 				UE_LOG(LogMenuCollection, Display, TEXT("clicked Command3"));
-	// 			}),
-	// 		"Command3"),
-	// 	NEW_ED_MENU(FEditorPlusMenu)(
-	// 		"Command4",
-	// 		"Command4 tips",
-	// 		FExecuteAction::CreateLambda([]
-	// 		{
-	// 			UE_LOG(LogMenuCollection, Display, TEXT("clicked Command4"));
-	// 		})),
-	// })
-	// });
-}
+	// <Section> MenuCollection
+	// | Find
+	// | Collections
 
-void FMenuCollection::BuildSubMenu()
-{
-}
+	// <Section> MenuCollection
+	Menu = FEditorPlusPath::RegisterPath("/EditorPlusTools/<Section>MenuCollection");
+	Menu->SetFriendlyName(LOCTEXT("MenuCollection", "MenuCollection"));
+	Menu->SubscribePreBuildMenu(FMenuExtensionDelegate::CreateSP(this, &FMenuCollection::OnPreShowMenu));
 
-
-
-void FMenuCollection::BuildPathMenu()
-{
-	UToolMenu* ToolMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.File");
-
-	FToolMenuEntry Entry = FToolMenuEntry::InitMenuEntry(
-	TEXT("Test Menu"),
-	FText::FromString(TEXT("Test Menu")),
-	FText::FromString(TEXT("Test Menu")),
-	FSlateIcon(),
-	FUIAction(
-		FExecuteAction::CreateLambda([]
-		{
-			UE_LOG(LogMenuCollection, Display, TEXT("clicked Test Menu"));
-		}),
-		FCanExecuteAction()
-	)
+	// | Find
+	FEditorPlusPath::RegisterChildPath(Menu.ToSharedRef(), "<SubMenu>Find",
+		EP_NEW_MENU(FEditorPlusSubMenu)("MenuCollectionFind", "MenuCollectionFind", LOCTEXT("MenuCollectionFind", "Find"))
+		->Content({
+			EP_NEW_MENU(FEditorPlusWidget)("MenuCollectionFind")
+			->BindWidget(
+				SNew(SBox)
+				.WidthOverride(400)
+				[
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.MaxHeight(40)
+					[
+						SNew(SBox)
+						[
+							SAssignNew(MenuSearchBox, SSearchBox)
+							.MinDesiredWidth(300)
+							.OnTextChanged(SharedThis(this), &FMenuCollection::OnMenuNameFilterChanged)
+						]
+					]
+					+ SVerticalBox::Slot()
+					.MaxHeight(400)
+					[
+						SNew(SBox)
+						[
+							SAssignNew(MenuSearchListView, SMenuNameListView)
+							.ListItemsSource(&MenuSearchItems)
+							.OnGenerateRow(SharedThis(this), &FMenuCollection::OnGenerateWidgetForMenuSearchListView)
+						]
+					]
+				]
+			)
+		})
 	);
-	Entry.InsertPosition.Name = NAME_None;
-	Entry.InsertPosition.Position = EToolMenuInsertType::First;
-	
-	ToolMenu->AddMenuEntry(TEXT("Test Menu"), Entry);
+
+	// | Collections
+	FEditorPlusPath::RegisterChildPath(Menu.ToSharedRef(), "<SubMenu>Collections",
+		EP_NEW_MENU(FEditorPlusSubMenu)("MenuCollections", "MenuCollections", LOCTEXT("MenuCollections", "Collections"))
+		->Content({
+			EP_NEW_MENU(FEditorPlusWidget)("MenuCollections")
+			->BindWidget(
+				SNew(SBox)
+				.WidthOverride(400)
+				[
+					SAssignNew(MenuSavedListView, SMenuNameListView)
+					.ListItemsSource(&MenuSavedItems)
+					.OnGenerateRow(SharedThis(this), &FMenuCollection::OnGenerateWidgetForMenuSearchListView)
+				]
+			)
+		})
+	);
 }
+
+void FMenuCollection::OnPreShowMenu(FMenuBuilder& MenuBuilder)
+{
+	MenuListCache = IMenuItem::CollectMenuItems();
+	MenuSearchBox->SetText(FText::GetEmpty());
+	MenuSearchItems = MenuListCache;
+}
+
+void FMenuCollection::OnMenuNameFilterChanged(const FText& InFilterText)
+{
+	if (MenuSearchTimer.IsValid())
+	{
+		MenuSearchBox->UnRegisterActiveTimer(MenuSearchTimer.ToSharedRef());
+	}
+
+	MenuSearchTimer = MenuSearchBox->RegisterActiveTimer(
+		MenuSearchDelay,
+		FWidgetActiveTimerDelegate::CreateLambda(
+		[self = SharedThis(this)](double, double)
+		{
+			self->MenuSearchTimer.Reset();
+			self->UpdateMenuSearchItems();
+			return EActiveTimerReturnType::Stop;
+		}));
+}
+
+
+void FMenuCollection::UpdateMenuSearchItems()
+{
+	MenuSearchItems.Reset();
+
+	const FString FilterStr = MenuSearchBox->GetText().ToString();
+
+	if (!FilterStr.IsEmpty())
+	{
+		// const FString PatternStr = TEXT("(.*?)(") + FString::Join(FilterStr, TEXT(".*?")) + TEXT(")(.*)");
+		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FEditorPlusUtils::SplitString(FilterStr, " "), TEXT(".*?")) + TEXT(")(.*)");
+		UE_LOG(LogMenuCollection, Display, TEXT("MenuCollection Search Pattern: %s, %llu, %llu"), *PatternStr, sizeof(TCHAR), sizeof(wchar_t));
+		const std::wregex Pattern = std::wregex(TCHAR_TO_WCHAR(ToCStr(PatternStr)), std::regex::icase);
+
+		using FMatchItemType = TTuple<uint16, uint16, TSharedPtr<IMenuItem>>;
+		TArray<FMatchItemType> MatchItems;
+
+		for (TSharedPtr<IMenuItem> Item: MenuListCache)
+		{
+			std::wsmatch MatchResult;
+			const std::wstring SearchText(TCHAR_TO_WCHAR(*Item->GetSearchText()));
+			if (!std::regex_match(SearchText, MatchResult, Pattern)) continue;
+
+			if (MatchResult.empty() || !MatchResult.ready()) continue;
+
+			MatchItems.Push(MakeTuple<uint16, uint16, TSharedPtr<IMenuItem>>(
+				 MatchResult[2].length(), MatchResult[1].length(), Item.ToSharedRef()));
+
+			UE_LOG(
+				LogMenuCollection, Display, TEXT("MenuCollection Search Match: %s, %s, %s, %s"),
+				WCHAR_TO_TCHAR(MatchResult[1].str().c_str()), WCHAR_TO_TCHAR(MatchResult[2].str().c_str()),
+				WCHAR_TO_TCHAR(MatchResult[3].str().c_str()), WCHAR_TO_TCHAR(TCHAR_TO_WCHAR(*Item->GetSearchText())));
+		}
+
+		if (!MatchItems.IsEmpty())
+		{
+			MatchItems.Sort([](FMatchItemType a, FMatchItemType b)
+			{
+				if (a.Get<0>() != b.Get<0>())
+				{
+					return a.Get<0>() < b.Get<0>();
+				}
+
+				if (a.Get<1>() != b.Get<1>())
+				{
+					return a.Get<1>() < b.Get<1>();
+				}
+				return a.Get<2>()->GetName().Compare(b.Get<2>()->GetName()) < 0;
+			});
+			for (FMatchItemType& MatchItem: MatchItems)
+			{
+				MenuSearchItems.Push(MatchItem.Get<2>());
+			}
+		}
+	}
+	else
+	{
+		MenuSearchItems = MenuListCache;
+	}
+
+	if (MenuSearchListView.IsValid())
+	{
+		MenuSearchListView->RebuildList();
+		MenuSearchListView->RequestListRefresh();
+		MenuSearchListView->ScrollToTop();
+	}
+}
+
+TSharedRef<ITableRow> FMenuCollection::OnGenerateWidgetForMenuSearchListView(
+	TSharedPtr<IMenuItem> InItem, const TSharedRef<STableViewBase>& OwnerTable)
+{
+
+	class SMenuItemWidget: public STableRow<TSharedPtr<IMenuItem>>
+	{
+	public:
+		SLATE_BEGIN_ARGS(SMenuItemWidget){}
+		SLATE_END_ARGS()
+		using FSuperRowType = STableRow;
+
+		void Construct( const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTable,
+			const TSharedPtr<IMenuItem>& InListItem, const TSharedRef<FMenuCollection>& ThisRef)
+		{
+			Item = InListItem;
+			FSuperRowType::Construct(
+				FSuperRowType::FArguments()
+				.Padding(FMargin(2, 2))
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.VAlign(VAlign_Center)
+					.FillWidth(1.0)
+					[
+						SNew(SBox)
+						[
+							SNew(SButton)
+							.VAlign(VAlign_Center)
+							.Text(Item->GetFriendlyName())
+							.ToolTipText(Item->GetFriendlyTips())
+							.OnClicked(FOnClicked::CreateLambda(
+								[ItemRef=Item.ToSharedRef()]
+								{
+									if (!ItemRef->RunAction())
+									{
+										UE_LOG(LogMenuCollection, Error, TEXT("Failed to run [%s]"), ToCStr(ItemRef->GetFriendlyName().ToString()));
+									}
+									return FReply::Handled();
+								}))
+						]
+					]
+					+ SHorizontalBox::Slot()
+					.VAlign(VAlign_Center)
+					.HAlign(HAlign_Right)
+					.AutoWidth()
+					[
+						SNew(SBox)
+						[
+							SNew(SButton)
+							[
+								SAssignNew(StarImage, SImage)
+								.Image_Lambda([ThisRef, ItemRef=Item.ToSharedRef()]
+								{
+									if(ThisRef->MenuSavedItems.Contains(ItemRef))
+									{
+										return ThisRef->StaredIcon.Get();
+									}
+									return ThisRef->StarIcon.Get();
+								})
+							]
+							.OnClicked(FOnClicked::CreateLambda(
+								[ThisRef, ItemRef=Item.ToSharedRef()]
+								{
+									if(ThisRef->MenuSavedItems.Contains(ItemRef))
+									{
+										ThisRef->MenuSavedItems.RemoveSingle(ItemRef);
+									}
+									else
+									{
+										ThisRef->MenuSavedItems.Push(ItemRef);
+									}
+									if (ThisRef->MenuSavedListView.IsValid())
+									{
+										ThisRef->MenuSavedListView->RebuildList();
+										ThisRef->MenuSavedListView->RequestListRefresh();
+										ThisRef->MenuSearchListView->ScrollToTop();
+									}
+									return FReply::Handled();
+								}))
+						]
+					]
+				]
+				, InOwnerTable);
+		}
+
+	private:
+		TSharedPtr<IMenuItem> Item;
+		TSharedPtr<SImage> StarImage;
+	};
+
+	return SNew(SMenuItemWidget, OwnerTable, InItem, SharedThis(this));
+}
+
+void FMenuCollection::InitIcon()
+{
+	if(StarIcon.IsValid()) return;
+
+	const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(TEXT("EditorPlus"));
+	check(Plugin.IsValid());
+	const auto ResourcesPath = FPaths::Combine(Plugin->GetBaseDir(), TEXT("Resources"));
+
+	const FVector2D Icon16x16(16.0f, 16.0f);
+	StarIcon = MakeShared<FSlateVectorImageBrush>(FPaths::Combine(ResourcesPath, TEXT("save.svg")), Icon16x16);
+	StaredIcon = MakeShared<FSlateVectorImageBrush>(FPaths::Combine(ResourcesPath, TEXT("delete.svg")), Icon16x16);
+}
+
+
+void FMenuCollection::SaveMenuItemsConfig()
+{
+
+}
+
+#undef LOCTEXT_NAMESPACE
