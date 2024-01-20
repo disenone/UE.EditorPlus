@@ -34,6 +34,7 @@ void FMenuCollection::BuildMenu()
 {
 	if (Menu.IsValid()) return;
 
+	LoadMenuItemsConfig();
 	// <Section> MenuCollection
 	// | Find
 	// | Collections
@@ -100,8 +101,35 @@ void FMenuCollection::BuildMenu()
 void FMenuCollection::OnPreShowMenu(FMenuBuilder& MenuBuilder)
 {
 	MenuListCache = IMenuItem::CollectMenuItems();
+	MenuMapCache.Reset();
+	for (const auto Item: MenuListCache)
+	{
+		MenuMapCache.Add(Item->GetSaveString(), Item);
+	}
 	MenuSearchBox->SetText(FText::GetEmpty());
 	MenuSearchItems = MenuListCache;
+
+	MenuSavedItems.Reset();
+	if (!MenuSavedConfig.IsEmpty())
+	{
+		for (const auto ItemString: MenuSavedConfig)
+		{
+			auto Item = MenuMapCache.Find(ItemString);
+			if (Item)
+			{
+				MenuSavedItems.Push(*Item);
+			}
+		}
+	}
+
+	UpdateMenuSearchItems();
+	if (MenuSavedListView.IsValid())
+	{
+		MenuSavedListView->RebuildList();
+		MenuSavedListView->RequestListRefresh();
+		MenuSavedListView->ScrollToTop();
+	}
+	UE_LOG(LogMenuCollection, Display, TEXT("MenuCollection Collected"));
 }
 
 void FMenuCollection::OnMenuNameFilterChanged(const FText& InFilterText)
@@ -256,17 +284,20 @@ TSharedRef<ITableRow> FMenuCollection::OnGenerateWidgetForMenuSearchListView(
 									if(ThisRef->MenuSavedItems.Contains(ItemRef))
 									{
 										ThisRef->MenuSavedItems.RemoveSingle(ItemRef);
+										ThisRef->MenuSavedConfig.Remove(ItemRef->GetSaveString());
 									}
 									else
 									{
 										ThisRef->MenuSavedItems.Push(ItemRef);
+										ThisRef->MenuSavedConfig.Push(ItemRef->GetSaveString());
 									}
 									if (ThisRef->MenuSavedListView.IsValid())
 									{
 										ThisRef->MenuSavedListView->RebuildList();
 										ThisRef->MenuSavedListView->RequestListRefresh();
-										ThisRef->MenuSearchListView->ScrollToTop();
+										ThisRef->MenuSavedListView->ScrollToTop();
 									}
+									ThisRef->SaveMenuItemsConfig();
 									return FReply::Handled();
 								}))
 						]
@@ -296,10 +327,32 @@ void FMenuCollection::InitIcon()
 	StaredIcon = MakeShared<FSlateVectorImageBrush>(FPaths::Combine(ResourcesPath, TEXT("delete.svg")), Icon16x16);
 }
 
+static const FString GConfigFilePath = IPluginManager::Get().FindPlugin("EditorPlus")->GetBaseDir() / TEXT("Config") / TEXT("MenuCollection.ini");
 
-void FMenuCollection::SaveMenuItemsConfig()
+void FMenuCollection::LoadMenuItemsConfig()
 {
+	if (FPaths::FileExists(GConfigFilePath))
+	{
+		UE_LOG(LogMenuCollection, Display, TEXT("MenuCollection Config File: %s"), *GConfigFilePath);
+	}
+	else
+	{
+		UE_LOG(LogMenuCollection, Display, TEXT("MenuCollection Config File Not Found: %s"), *GConfigFilePath);
+		return;
+	}
 
+	FConfigFile Config;
+	Config.Read(GConfigFilePath);
+	Config.GetArray(TEXT("Collections"), TEXT("Menu"), MenuSavedConfig);
+}
+
+
+void FMenuCollection::SaveMenuItemsConfig() const
+{
+	FConfigFile Config;
+	Config.Empty();
+	Config.SetArray(TEXT("Collections"), TEXT("Menu"), MenuSavedConfig);
+	Config.Write(GConfigFilePath);
 }
 
 #undef LOCTEXT_NAMESPACE

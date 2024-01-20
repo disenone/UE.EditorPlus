@@ -21,13 +21,15 @@ private:
 	TSharedRef<ITableRow> OnGenerateWidgetForMenuSearchListView(TSharedPtr<IMenuItem> InItem, const TSharedRef<STableViewBase>& OwnerTable);
 	void UpdateMenuSearchItems();
 	void InitIcon();
-	void SaveMenuItemsConfig();
+	void SaveMenuItemsConfig() const;
+	void LoadMenuItemsConfig();
 
 	typedef SListView<TSharedPtr<IMenuItem>> SMenuNameListView;
 
 	TSharedPtr<FEditorPlusMenuBase> Menu;
 
 	TArray<TSharedPtr<IMenuItem>> MenuListCache;
+	TMap<FString, TSharedPtr<IMenuItem>> MenuMapCache;
 	TArray<TSharedPtr<IMenuItem>> MenuSearchItems;
 	TSharedPtr<SSearchBox>	MenuSearchBox;
 	TSharedPtr<SMenuNameListView> MenuSearchListView;
@@ -38,6 +40,7 @@ private:
 
 	TSharedPtr<SMenuNameListView> MenuSavedListView;
 	TArray<TSharedPtr<IMenuItem>> MenuSavedItems;
+	TArray<FString> MenuSavedConfig;
 };
 
 DECLARE_LOG_CATEGORY_EXTERN(LogMenuCollection, Display, All);

@@ -5,7 +5,7 @@
 class IMenuItem
 {
 public:
-	enum class EMenuType
+	enum class EMenuType: uint8
 	{
 		Command,
 		Tab,
@@ -30,6 +30,11 @@ public:
 	virtual FSlateIcon GetIcon() const = 0;
 
 	virtual bool RunAction() const = 0;
+
+	virtual FString GetSaveString() const
+	{
+		return FString::FromInt(static_cast<int32>(Type)) + TEXT(".") + GetName().ToString();
+	}
 
 	static TArray<TSharedPtr<IMenuItem>> CollectMenuItems();
 
