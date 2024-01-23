@@ -1,4 +1,5 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
+// All rights reserved. Licensed under MIT License.
 
 #pragma once
 

@@ -1,4 +1,7 @@
-﻿#include "EditorPlusPathMenuManager.h"
+﻿// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
+// All rights reserved. Licensed under MIT License.
+
+#include "EditorPlusPathMenuManager.h"
 #include "EditorPlusUtils.h"
 
 

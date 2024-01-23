@@ -1,3 +1,6 @@
+// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
+// All rights reserved. Licensed under MIT License.
+
 #pragma once
 
 class EDITORPLUS_API FEditorPlusCommandInfo

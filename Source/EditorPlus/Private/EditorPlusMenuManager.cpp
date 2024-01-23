@@ -1,4 +1,7 @@
-﻿#include "EditorPlusMenuManager.h"
+﻿// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
+// All rights reserved. Licensed under MIT License.
+
+#include "EditorPlusMenuManager.h"
 #include "EditorPlusPathMenuManager.h"
 
 FEditorPlusMenuManager::FEditorPlusMenuManager()

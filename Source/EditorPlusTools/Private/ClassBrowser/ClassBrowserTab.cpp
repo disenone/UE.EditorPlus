@@ -1,4 +1,6 @@
-﻿
+﻿// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
+// All rights reserved. Licensed under MIT License.
+
 #include "ClassBrowserTab.h"
 #include "ClassBrowser.h"
 #include <regex>

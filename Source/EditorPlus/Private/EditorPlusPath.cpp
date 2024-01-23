@@ -1,4 +1,7 @@
-﻿#include "EditorPlusPath.h"
+﻿// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
+// All rights reserved. Licensed under MIT License.
+
+#include "EditorPlusPath.h"
 #include "EditorPlusMenuManager.h"
 
 TSharedPtr<FEditorPlusMenuBase> FEditorPlusPath::RegisterPath(

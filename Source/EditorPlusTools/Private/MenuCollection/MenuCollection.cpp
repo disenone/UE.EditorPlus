@@ -1,4 +1,7 @@
-﻿#include "MenuCollection.h"
+﻿// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
+// All rights reserved. Licensed under MIT License.
+
+#include "MenuCollection.h"
 #include "EditorPlusPath.h"
 #include "EditorPlusUtils.h"
 #include <regex>

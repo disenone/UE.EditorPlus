@@ -1,4 +1,7 @@
-﻿#include "ClassBrowser.h"
+﻿// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
+// All rights reserved. Licensed under MIT License.
+
+#include "ClassBrowser.h"
 #include "ClassBrowserTab.h"
 #include "EditorPlusPath.h"
 

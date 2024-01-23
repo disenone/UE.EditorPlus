@@ -1,4 +1,7 @@
-﻿#pragma once
+﻿// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
+// All rights reserved. Licensed under MIT License.
+
+#pragma once
 
 #include "LevelEditor.h"
 

@@ -1,4 +1,7 @@
-﻿#include "EditorPlusUtils.h"
+﻿// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
+// All rights reserved. Licensed under MIT License.
+
+#include "EditorPlusUtils.h"
 
 
 FString FEditorPlusUtils::GetPathDelimiter()

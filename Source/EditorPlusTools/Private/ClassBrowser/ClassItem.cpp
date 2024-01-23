@@ -1,4 +1,7 @@
-﻿#include "ClassItem.h"
+﻿// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
+// All rights reserved. Licensed under MIT License.
+
+#include "ClassItem.h"
 #include "SourceCodeNavigation.h"
 
 namespace ClassBrowser_Detail

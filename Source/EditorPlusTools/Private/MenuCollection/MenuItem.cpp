@@ -1,4 +1,7 @@
-﻿#include "MenuItem.h"
+﻿// Copyright (c) 2024 - 2024, Disenone (https://github.com/disenone).
+// All rights reserved. Licensed under MIT License.
+
+#include "MenuItem.h"
 
 
 struct RecursiveCommandDataGetter final
