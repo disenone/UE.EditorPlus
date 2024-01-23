@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "EditorPlusEnum.h"
+#include "ThirdParty/BetterEnums/Enum.h"
 #include "EditorPlusCommandInfo.h"
 #include "EditorPlusLog.h"
 
