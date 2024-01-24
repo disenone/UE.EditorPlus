@@ -9,7 +9,7 @@
 	"CreatedByURL": "https://disenone.github.io/wiki/",
 	"DocsURL": "https://disenone.github.io/wiki/en/ue-%E7%BC%96%E8%BE%91%E5%99%A8%E6%8F%92%E4%BB%B6-EditorPlus/",
 	"SupportURL": "https://github.com/disenone/UE.EditorPlus/issues",
-	"MarketplaceURL": "",
+	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/b2c53b47de8c4add8671bc53614b910a",
 	"CanContainContent": true,
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
