@@ -3,7 +3,7 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "EditorPlus",
-	"Description": "Easy to Extend editor menu; ClassBrowser easy to browser All UObject info; MenuCollection easy to find and save Menu Command.",
+	"Description": "Easy to Extend editor menu; ClassBrowser easy to browser All UObject Class info; MenuCollection easy to find and save Menu Command.",
 	"Category": "Editor",
 	"CreatedBy": "Disenone",
 	"CreatedByURL": "https://disenone.github.io/wiki/",
