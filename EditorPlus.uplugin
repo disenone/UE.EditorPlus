@@ -14,6 +14,10 @@
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
 	"Installed": false,
+	"EngineVersion": "5.3",
+	"WhitelistPlatforms": [
+		"Win64"
+	],
 	"Modules": [
 		{
 			"Name": "EditorPlus",
