@@ -15,19 +15,18 @@
 	"IsExperimentalVersion": false,
 	"Installed": false,
 	"EngineVersion": "5.3",
-	"WhitelistPlatforms": [
-		"Win64"
-	],
 	"Modules": [
 		{
 			"Name": "EditorPlus",
 			"Type": "Editor",
-			"LoadingPhase": "PostEngineInit"
+			"LoadingPhase": "PostEngineInit",
+			"WhitelistPlatforms": ["Win64"]
 		},
 		{
 			"Name": "EditorPlusTools",
 			"Type": "Editor",
-			"LoadingPhase": "PostEngineInit"
+			"LoadingPhase": "PostEngineInit",
+			"WhitelistPlatforms": ["Win64"]
 		}
 	]
 }
