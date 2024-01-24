@@ -6,7 +6,7 @@
 
 UnrealEngine 插件来方便扩展编辑器菜单。并增加一些实用的编辑器工具。
 
-https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/market/video.mp4
+https://github.com/disenone/UE.EditorPlus/assets/2453074/9d719361-d0b1-4c7c-ba71-d862f404adfb
 
 ## 详细文档
 

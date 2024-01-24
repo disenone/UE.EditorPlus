@@ -6,7 +6,7 @@
 
 UE.EditorPlus is a plugin for Unreal Engine that facilitates the extension of the editor menu and adds some practical editor tools.
 
-https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/market/video.mp4
+https://github.com/disenone/UE.EditorPlus/assets/2453074/9d719361-d0b1-4c7c-ba71-d862f404adfb
 
 ## Detailed Documentation
 
