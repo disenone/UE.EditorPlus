@@ -6,6 +6,8 @@
 
 UnrealEngine 插件来方便扩展编辑器菜单。并增加一些实用的编辑器工具。
 
+https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/market/video.mp4
+
 ## 详细文档
 
 中文：[UE 编辑器插件 UE.EditorPlus 说明文档](https://disenone.github.io/wiki/ue-%E7%BC%96%E8%BE%91%E5%99%A8%E6%8F%92%E4%BB%B6-EditorPlus/)
@@ -26,7 +28,7 @@ FEditorPlusPath::RegisterPathAction(
 );
 ```
 
-![](Resources/menu.png)
+![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/menu.png)
 
 ## 实用工具
 
@@ -34,17 +36,17 @@ FEditorPlusPath::RegisterPathAction(
 
 类浏览器
 
-![](Resources/classbrowser_menu.png)
+![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/classbrowser_menu.png)
 
-![](Resources/classbrowser.png)
+![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/classbrowser.png)
 
 ### MenuCollection
 
 编辑器菜单命令快速查找和收藏
 
-![](Resources/menucollection_find.png)
+![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/menucollection_find.png)
 
-![](Resources/menucollection_star.png)
+![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/menucollection_star.png)
 
 
 ## TODO

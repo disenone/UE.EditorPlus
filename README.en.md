@@ -6,6 +6,8 @@
 
 UE.EditorPlus is a plugin for Unreal Engine that facilitates the extension of the editor menu and adds some practical editor tools.
 
+https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/market/video.mp4
+
 ## Detailed Documentation
 
 中文：[UE 编辑器插件 UE.EditorPlus 说明文档](https://disenone.github.io/wiki/ue-%E7%BC%96%E8%BE%91%E5%99%A8%E6%8F%92%E4%BB%B6-EditorPlus/)
@@ -26,20 +28,20 @@ FEditorPlusPath::RegisterPathAction(
 );
 ```
 
-![](Resources/menu.png)
+![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/menu.png)
 
 ## Practical Tools
 
 ### ClassBrowser
 
-![](Resources/classbrowser_menu.png)
+![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/classbrowser_menu.png)
 
-![](Resources/classbrowser.png)
+![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/classbrowser.png)
 
 ### MenuCollection
 
 Quickly find and collect editor menu commands
 
-![](Resources/menucollection_find.png)
+![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/menucollection_find.png)
 
-![](Resources/menucollection_star.png)
+![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/menucollection_star.png)
