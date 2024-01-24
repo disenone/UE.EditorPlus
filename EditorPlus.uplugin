@@ -1,4 +1,4 @@
-﻿{
+{
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
@@ -8,6 +8,7 @@
 	"CreatedBy": "Disenone",
 	"CreatedByURL": "https://disenone.github.io/wiki/",
 	"DocsURL": "https://disenone.github.io/wiki/en/ue-%E7%BC%96%E8%BE%91%E5%99%A8%E6%8F%92%E4%BB%B6-EditorPlus/",
+	"SupportURL": "https://github.com/disenone/UE.EditorPlus/issues",
 	"MarketplaceURL": "",
 	"CanContainContent": true,
 	"IsBetaVersion": false,
@@ -18,8 +19,8 @@
 			"Name": "EditorPlus",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit"
-		}
-		,{
+		},
+		{
 			"Name": "EditorPlusTools",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit"
