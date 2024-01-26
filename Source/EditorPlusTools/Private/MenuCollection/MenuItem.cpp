@@ -3,6 +3,41 @@
 
 #include "MenuItem.h"
 
+class FExposedGlobalTabmanager: public FGlobalTabmanager
+{
+public:
+
+	TArray< TWeakPtr<FTabSpawnerEntry> > CollectSpawners()
+	{
+		TArray< TWeakPtr<FTabSpawnerEntry> > AllSpawners;
+
+		// Editor-specific tabs
+		for ( FTabSpawner::TIterator SpawnerIterator(TabSpawner); SpawnerIterator; ++SpawnerIterator )
+		{
+			const TSharedRef<FTabSpawnerEntry>& SpawnerEntry = SpawnerIterator.Value();
+			{
+				if (IsAllowedTab(SpawnerEntry->GetTabType()))
+				{
+					AllSpawners.AddUnique(SpawnerEntry);
+				}
+			}
+		}
+
+		// General Tabs
+		for ( FTabSpawner::TIterator SpawnerIterator(*NomadTabSpawner); SpawnerIterator; ++SpawnerIterator )
+		{
+			const TSharedRef<FTabSpawnerEntry>& SpawnerEntry = SpawnerIterator.Value();
+			{
+				if (IsAllowedTab(SpawnerEntry->GetTabType()))
+				{
+					AllSpawners.AddUnique(SpawnerEntry);
+				}
+			}
+		}
+
+		return AllSpawners;
+	}
+};
 
 struct RecursiveCommandDataGetter final
 {
@@ -16,7 +51,7 @@ struct RecursiveCommandDataGetter final
 			Ret.Push(MakeShared<FMenuItemCommand>(Key, Value));
 		}
 
-		for (auto& TabEntry: FGlobalTabmanager::Get()->CollectSpawners())
+		for (auto& TabEntry: static_cast<FExposedGlobalTabmanager&>(FGlobalTabmanager::Get().Get()).CollectSpawners())
 		{
 			if(TabEntry.IsValid()) Ret.Push(MakeShared<FMenuItemTab>(TabEntry.Pin()));
 		}

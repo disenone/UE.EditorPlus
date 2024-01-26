@@ -300,7 +300,7 @@ void FEditorPlusCommand::BuildMenu(FMenuBuilder& MenuBuilder)
 	PreBuildMenu(MenuBuilder);
 	if (!CommandInfo.IsValid()) return;
 	
-	if (CommandInfo->CommandList.IsValid() and CommandInfo->CommandInfo.IsValid())
+	if (CommandInfo->CommandList.IsValid() && CommandInfo->CommandInfo.IsValid())
 	{
 		MenuBuilder.PushCommandList(CommandInfo->CommandList.ToSharedRef());
     	MenuBuilder.AddMenuEntry(CommandInfo->CommandInfo, Hook);
