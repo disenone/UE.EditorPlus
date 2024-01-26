@@ -379,7 +379,7 @@ void SClassBrowserTab::UpdateClassNameListItems()
 	
 	if (!FilterStr.IsEmpty())
 	{
-		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FilterStr, TEXT(".*?")) + TEXT(")(.*)");
+		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FEditorPlusUtils::SplitString(FilterStr, " "), TEXT(".*?")) + TEXT(")(.*)");
 		const std::wregex Pattern = std::wregex(TCHAR_TO_WCHAR(ToCStr(PatternStr)), std::regex::icase);
 		using FMatchItemType = TTuple<uint16, uint16, TSharedPtr<FClassNameListItem>>; 
 		TArray<FMatchItemType> MatchItems;
@@ -618,7 +618,7 @@ void SClassBrowserTab::UpdateClassInfoListItems()
 	
 	if (!FilterStr.IsEmpty())
 	{
-		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FilterStr, TEXT(".*?")) + TEXT(")(.*)");
+		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FEditorPlusUtils::SplitString(FilterStr, " "), TEXT(".*?")) + TEXT(")(.*)");
 		const std::wregex Pattern = std::wregex(TCHAR_TO_WCHAR(ToCStr(PatternStr)), std::regex::icase);
 		using FMatchItemType = TTuple<uint16, uint16, TSharedPtr<FClassInfoListItem>>; 
 		TArray<FMatchItemType> MatchItems;
