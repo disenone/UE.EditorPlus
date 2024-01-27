@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
+// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
 // All rights reserved. Licensed under MIT License.
 
 #pragma once
@@ -127,7 +127,7 @@ public:
 	virtual void ClearChildren() { Children.Empty(); }
 
 	TArray<TSharedRef<FEditorPlusMenuBase>> GetChildrenByName(
-		const FName& ChildName, const EEditorPlusMenuType Type = EEditorPlusMenuType::None) const
+		const FName& ChildName, const EEditorPlusMenuType Type) const
 	{
 		TArray<TSharedRef<FEditorPlusMenuBase>> Ret;
 		for (auto Menu: Children)
@@ -141,9 +141,9 @@ public:
 	}
 	
 	template <class Derived>
-	TArray<TSharedRef<Derived>> GetChildrenByName(const FName& Name) const
+	TArray<TSharedRef<Derived>> GetChildrenByName(const FName& ChildName) const
 	{
-		TArray<TSharedRef<FEditorPlusMenuBase>> BaseRet = GetChildrenByName(Name, Derived::StaticType());
+		TArray<TSharedRef<FEditorPlusMenuBase>> BaseRet = GetChildrenByName(ChildName, Derived::StaticType());
 		TArray<TSharedRef<Derived>>	Ret;
 		Ret.Reserve(BaseRet.Num());
 		for(auto Menu: BaseRet)
