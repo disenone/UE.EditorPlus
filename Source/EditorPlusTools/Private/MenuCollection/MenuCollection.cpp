@@ -4,10 +4,12 @@
 #include "MenuCollection.h"
 #include "EditorPlusPath.h"
 #include "EditorPlusUtils.h"
-#include <regex>
-
 #include "MenuItem.h"
-#include "Interfaces/IPluginManager.h"
+
+#include <regex>
+#include <Interfaces/IPluginManager.h>
+#include <Widgets/Input/SSearchBox.h>
+#include <Brushes/SlateImageBrush.h>
 
 DEFINE_LOG_CATEGORY(LogMenuCollection);
 

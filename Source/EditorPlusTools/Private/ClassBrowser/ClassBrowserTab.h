@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "Slate.h"
 #include "ClassItem.h"
+#include <Widgets/SCompoundWidget.h>
 
 class SClassBrowserTab final : public SCompoundWidget
 {

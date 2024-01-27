@@ -5,7 +5,8 @@
 
 #include "EditorPlusToolInterface.h"
 #include "EditorPlusMenu.h"
-#include "Slate.h"
+
+#include <Brushes/SlateImageBrush.h>
 
 class IMenuItem;
 

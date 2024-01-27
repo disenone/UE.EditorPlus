@@ -5,7 +5,13 @@
 #include "ClassBrowser.h"
 #include <regex>
 
-#include "Widgets/Views/STableRow.h"
+#include <Widgets/Views/STableRow.h>
+#include <Widgets/Input/SSearchBox.h>
+#include <Widgets/Input/SNumericEntryBox.h>
+#include <Widgets/Text/SRichTextBlock.h>
+#include <Widgets/Layout/SScrollBox.h>
+#include <Styling/SlateStyle.h>
+
 
 using namespace ClassBrowser_Detail;
 
