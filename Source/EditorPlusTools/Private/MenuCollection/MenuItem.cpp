@@ -39,12 +39,27 @@ public:
 	}
 };
 
+
+template<auto M>
+struct FExposedPrivate;
+
+template<class T, class U, T U::*M>
+struct FExposedPrivate<M> {
+	friend T& ExposePrivate(U& u) {
+		return u.*M;
+	}
+};
+
+template struct FExposedPrivate<&FUICommandList::UICommandBindingMap>;
+TMap< const TSharedPtr< const FUICommandInfo >, FUIAction >& ExposePrivate(FUICommandList&);
+
+
 struct RecursiveCommandDataGetter final
 {
 	static TArray<TSharedPtr<IMenuItem>> CollectMenuItems()
 	{
 		TArray<TSharedPtr<IMenuItem>> Ret;
-		for (auto& Pair : FEditorPlusUtils::GetLevelEditorModule().GetGlobalLevelEditorActions()->UICommandBindingMap)
+		for (auto& Pair : ExposePrivate(FEditorPlusUtils::GetLevelEditorModule().GetGlobalLevelEditorActions().Get()))
 		{
 			auto& Key = Pair.Key;
 			auto& Value = Pair.Value;
