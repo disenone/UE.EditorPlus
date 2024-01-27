@@ -1,9 +1,10 @@
-echo on
+echo off
 
 set CWD=%~dp0
 set ENGINE=e:\UE\Epic Games\UE_
 set OUTPUT=e:\UE\projects\products
 set VERS=5.0 5.1 5.2 5.3
+set ZIP="D:\Program Files\7-Zip\7z.exe"
 
 set ARG=%1
 
@@ -34,6 +35,7 @@ goto :exit
     xcopy /y "%CWD%\Config\FilterPlugin.ini" "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus\Config\"
     rmdir /s /q %OUTPUT%\EditorPlus\ue%VER%\EditorPlus\Binaries"
     rmdir /s /q %OUTPUT%\EditorPlus\ue%VER%\EditorPlus\Intermediate"
+    call %ZIP% a -tzip "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus-ue%VER%.zip" "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus"
 
 goto :eof
 
