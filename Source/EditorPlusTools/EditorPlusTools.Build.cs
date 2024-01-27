@@ -39,7 +39,7 @@ public class EditorPlusTools : ModuleRules
 			new string[]
 			{
 				"Core",
-				"EditorPlusTools",
+				"EditorPlus",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
