@@ -30,12 +30,14 @@ goto :exit
 
 :package
     set VER=%~1
+    echo "--------------------Building Version [%VER%]--------------------"
     call "%ENGINE%%VER%\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin="%CWD%EditorPlus.uplugin" -Package="%OUTPUT%\EditorPlus\ue%VER%\EditorPlus" -Rocket
     mkdir "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus\Config"
     xcopy /y "%CWD%\Config\FilterPlugin.ini" "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus\Config\"
     rmdir /s /q %OUTPUT%\EditorPlus\ue%VER%\EditorPlus\Binaries"
     rmdir /s /q %OUTPUT%\EditorPlus\ue%VER%\EditorPlus\Intermediate"
-    call %ZIP% a -tzip "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus-ue%VER%.zip" "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus"
+    del /q "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus-ue%VER%.zip" > nul
+    call %ZIP% a -tzip "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus-ue%VER%.zip" "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus" > nul
 
 goto :eof
 
