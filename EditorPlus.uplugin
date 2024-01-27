@@ -20,13 +20,13 @@
 			"Name": "EditorPlus",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit",
-			"WhitelistPlatforms": ["Win64"]
+			"PlatformAllowList": ["Win64"]
 		},
 		{
 			"Name": "EditorPlusTools",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit",
-			"WhitelistPlatforms": ["Win64"]
+			"PlatformAllowList": ["Win64"]
 		}
 	]
 }
