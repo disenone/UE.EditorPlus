@@ -4,6 +4,7 @@
 #include "ClassBrowser.h"
 #include "ClassBrowserTab.h"
 #include "EditorPlusPath.h"
+#include "Config.h"
 
 DEFINE_LOG_CATEGORY(LogClassBrowser);
 #define LOCTEXT_NAMESPACE "EditorPlusTools"
@@ -58,7 +59,7 @@ void FClassBrowser::RegisterMenu()
 	if (!Menu.IsValid())
 	{
 		Menu = FEditorPlusPath::RegisterPathAction(
-			"/<MenuBar>EditorPlusTools/<Command>ClassBrowser",
+			EP_TOOLS_PATH "/<Command>ClassBrowser",
 			FExecuteAction::CreateSP(Tab.ToSharedRef(), &FEditorPlusTab::TryInvokeTab),
 			EP_FNAME_HOOK_AUTO,
 			LOCTEXT("ClassBrowser", "ClassBrowser"),

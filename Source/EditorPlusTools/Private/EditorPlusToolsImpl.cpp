@@ -2,11 +2,11 @@
 // All rights reserved. Licensed under MIT License.
 
 #include "EditorPlusToolsImpl.h"
-
 #include "EditorPlusPath.h"
 #include "MenuTest/MenuTest.h"
 #include "ClassBrowser/ClassBrowser.h"
 #include "MenuCollection/MenuCollection.h"
+#include "Config.h"
 
 #define LOCTEXT_NAMESPACE "EditorPlusTools"
 
@@ -25,21 +25,24 @@ void FEditorPlusToolsImpl::ShutdownTools()
 
 void FEditorPlusToolsImpl::AddTools()
 {
+
+#if defined(EP_ENABLE_MENU_TEST) || defined(EP_ENABLE_CLASS_BROWSER) || defined(EP_ENABLE_MENU_COLLECTION)
+
 	if (!Root.IsValid())
 	{
 		Root = FEditorPlusPath::RegisterPath(
-			"/<MenuBar>EditorPlusTools",
+			EP_TOOLS_PATH,
 			LOCTEXT("EditorPlusTools", "EditorPlusTools"),
 			LOCTEXT("EditorPlusToolsTips", "Useful tools for editor"));
 	}
 
 	if (!Tools.Num())
 	{
-		
+
 #ifdef EP_ENABLE_MENU_TEST
 		Tools.Emplace(MakeShared<FMenuTest>());
 #endif
-	
+
 #ifdef EP_ENABLE_CLASS_BROWSER
 		Tools.Emplace(MakeShared<FClassBrowser>());
 #endif
@@ -48,6 +51,10 @@ void FEditorPlusToolsImpl::AddTools()
 		Tools.Emplace(MakeShared<FMenuCollection>());
 #endif
 	}
+
+#endif
+
+
 }
 
 void FEditorPlusToolsImpl::RegisterConsoleCommand()

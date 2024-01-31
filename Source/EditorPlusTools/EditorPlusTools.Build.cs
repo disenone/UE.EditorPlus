@@ -20,7 +20,12 @@ public class EditorPlusTools : ModuleRules
 		{
 			PrivateDefinitions.Add("EP_ENABLE_MENU_TEST");
 		}
-		
+
+		if (Target.Platform == UnrealTargetPlatform.Mac)
+		{
+			PrivateDefinitions.Add("EP_USE_TOOLBAR");
+		}
+
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...

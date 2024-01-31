@@ -5,6 +5,7 @@
 #include "EditorPlusPath.h"
 #include "EditorPlusUtils.h"
 #include "MenuItem.h"
+#include "Config.h"
 
 #include <regex>
 #include <Interfaces/IPluginManager.h>
@@ -45,7 +46,7 @@ void FMenuCollection::BuildMenu()
 	// | Collections
 
 	// <Section> MenuCollection
-	Menu = FEditorPlusPath::RegisterPath("/<MenuBar>EditorPlusTools/<Section>MenuCollection");
+	Menu = FEditorPlusPath::RegisterPath(EP_TOOLS_PATH "/<Section>MenuCollection");
 	Menu->SetFriendlyName(LOCTEXT("MenuCollection", "MenuCollection"));
 	Menu->SubscribePreBuildMenu(FMenuExtensionDelegate::CreateSP(this, &FMenuCollection::OnPreShowMenu));
 
