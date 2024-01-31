@@ -7,6 +7,8 @@
 #include "EditorPlus.h"
 #include "EditorPlusMenu.h"
 
+#include <Misc/EngineVersionComparison.h>
+
 template <class DelegateClass, class DataHolder, typename DelegateSignature>
 class TOnApply
 {
@@ -33,7 +35,11 @@ public:
 		const auto Map = DelegateMap();
 		if(!Map) return nullptr;
 		Map->Emplace(UniqueId, Delegate);
+#if UE_VERSION_OLDER_THAN(5, 3, 0)
+		return DelegateClass::CreateStatic(&OnApply, UniqueId);
+#else
 		return DelegateClass::CreateSPLambda(InUserObjectRef, &OnApply, UniqueId);
+#endif
 	}
 };
 

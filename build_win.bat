@@ -8,6 +8,10 @@ set ZIP="D:\Program Files\7-Zip\7z.exe"
 
 set ARG=%1
 
+if "%ARG%"=="" (
+    goto :help
+)
+
 @REM check version valid
 echo %VERS% | findstr %ARG% >nul && (
     @REM echo %ARG% valid
@@ -36,9 +40,9 @@ goto :exit
     xcopy /y "%CWD%\Config\FilterPlugin.ini" "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus\Config\"
     rmdir /s /q %OUTPUT%\EditorPlus\ue%VER%\EditorPlus\Binaries"
     rmdir /s /q %OUTPUT%\EditorPlus\ue%VER%\EditorPlus\Intermediate"
-    del /q "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus-ue%VER%.zip" > nul
-    call %ZIP% a -tzip "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus-ue%VER%.zip" "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus" > nul
-
+    del /q "%OUTPUT%\EditorPlus\ue%VER%\*.zip" > nul
+    call %ZIP% a -tzip "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus_ue%VER%_win.zip" "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus" > nul
+    xcopy /y "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus_ue%VER%_win.zip" "%OUTPUT%\EditorPlus\"
 goto :eof
 
 :help
