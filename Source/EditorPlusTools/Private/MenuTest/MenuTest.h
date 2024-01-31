@@ -17,6 +17,7 @@ private:
 	void BuildMixMenu();
 	void BuildExtendMenu();
 	void BuildTestMenu();
+	void BuildToolBar();
 	FReply OnClickButton() const;
 	TSharedPtr<FEditorPlusMenuBase> RegisterPath(const FString& Path, const bool ShouldSuccess=true, const FText& FriendlyName=FText::GetEmpty(), const FText& FriendlyTips=FText::GetEmpty());
 	

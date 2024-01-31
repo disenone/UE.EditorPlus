@@ -7,45 +7,77 @@
 #include "EditorPlus.h"
 #include "EditorPlusMenu.h"
 
-template <class DelegateClass, class BuilderClass, class Subsystem>
-class TDelegateHolderBase
+template <class DelegateClass, class DataHolder, typename DelegateSignature>
+class TOnApply
+{
+};
+
+template <class DelegateClass, class DataHolder, class RetValType, typename... VarTypes>
+class TOnApply<DelegateClass, DataHolder, RetValType(VarTypes...)>
 {
 public:
 	static TMap<FName, DelegateClass>* DelegateMap()
 	{
-		return Subsystem::template GetDelegateMap<DelegateClass>();
-	}
-	
-	static DelegateClass Register(const FName& UniqueId, const DelegateClass& Delegate)
-	{
-		const auto Map = DelegateMap();
-		if(!Map) return nullptr;
-		
-		checkf(!Map->Contains(UniqueId), TEXT("Duplicate Delegate: %s"), ToCStr(UniqueId.ToString()));
-		Map->Emplace(UniqueId, Delegate);
-		return DelegateClass::CreateStatic(&TDelegateHolderBase::OnApply, UniqueId);
+		return DataHolder::template GetDelegateMap<DelegateClass>();
 	}
 
-	static DelegateClass Update(const FName& UniqueId, const DelegateClass& Delegate)
+	static RetValType OnApply(VarTypes... Vars, const FName UniqueId)
+	{
+		const auto Map = DelegateMap();
+		return (*Map)[UniqueId].Execute(Forward<VarTypes>(Vars)...);
+	}
+
+	template<class UserClass, ESPMode Mode>
+	static DelegateClass Register(const TSharedRef<UserClass, Mode>& InUserObjectRef, const FName& UniqueId, const DelegateClass& Delegate)
 	{
 		const auto Map = DelegateMap();
 		if(!Map) return nullptr;
 		Map->Emplace(UniqueId, Delegate);
-		return DelegateClass::CreateStatic(&TDelegateHolderBase::OnApply, UniqueId);	
+		return DelegateClass::CreateSPLambda(InUserObjectRef, &OnApply, UniqueId);
 	}
-	
-	static void OnApply(BuilderClass& MenuBuilder, const FName UniqueId)
+};
+
+template <class DelegateClass, class DataHolder, typename... VarTypes>
+class TOnApply<DelegateClass, DataHolder, void(VarTypes...)>
+{
+public:
+	static TMap<FName, DelegateClass>* DelegateMap()
+	{
+		return DataHolder::template GetDelegateMap<DelegateClass>();
+	}
+
+	static void OnApply(VarTypes... Vars, const FName UniqueId)
 	{
 		const auto Map = DelegateMap();
 		if(!Map) return;
-		
+
 		if (!Map->Contains(UniqueId))
 		{
 			return;
 		}
-		(*Map)[UniqueId].ExecuteIfBound(MenuBuilder);
+		(*Map)[UniqueId].ExecuteIfBound(Forward<VarTypes>(Vars)...);
 	}
-	
+
+	static DelegateClass Register(const FName& UniqueId, const DelegateClass& Delegate)
+	{
+		const auto Map = DelegateMap();
+		if(!Map) return nullptr;
+
+		checkf(!Map->Contains(UniqueId), TEXT("Duplicate Delegate: %s"), ToCStr(UniqueId.ToString()));
+		Map->Emplace(UniqueId, Delegate);
+		return DelegateClass::CreateStatic(&OnApply, UniqueId);
+	}
+};
+
+
+template <class DelegateClass, class DataHolder>
+class TDelegateHolderBase: public TOnApply<DelegateClass, DataHolder, typename DelegateClass::TFuncType>
+{
+	using Super = TOnApply<DelegateClass, DataHolder, typename DelegateClass::TFuncType>;
+public:
+	using Super::DelegateMap;
+	using Super::OnApply;
+
 	static DelegateClass Get(const FName& UniqueId)
 	{
 		const auto Map = DelegateMap();
@@ -75,49 +107,35 @@ public:
 
 };
 
-class FPathMenuBarExtensionDelegate: public FMenuBarExtensionDelegate
-{
-public:
-	FPathMenuBarExtensionDelegate(const FMenuBarExtensionDelegate& Delegate): FMenuBarExtensionDelegate(Delegate) {}
-	FPathMenuBarExtensionDelegate(TYPE_OF_NULLPTR) {}	
-};
-
-
-class FPathMenuExtensionDelegate: public FMenuExtensionDelegate
-{
-public:
-	FPathMenuExtensionDelegate(const FMenuExtensionDelegate& Delegate): FMenuExtensionDelegate(Delegate) {}
-	FPathMenuExtensionDelegate(TYPE_OF_NULLPTR) {}
-};
 
 template <class DelegateClass, class Subsystem>
 class TDelegateHolder
 {};
 
 
-template <class Subsystem>
-class TDelegateHolder<FMenuExtensionDelegate, Subsystem>: public TDelegateHolderBase<FMenuExtensionDelegate, FMenuBuilder, Subsystem>
+template <class DataHolder>
+class TDelegateHolder<FMenuExtensionDelegate, DataHolder>: public TDelegateHolderBase<FMenuExtensionDelegate, DataHolder>
 {};
 
-template <class Subsystem>
-class TDelegateHolder<FMenuBarExtensionDelegate, Subsystem>: public TDelegateHolderBase<FMenuBarExtensionDelegate, FMenuBarBuilder, Subsystem>
+template <class DataHolder>
+class TDelegateHolder<FMenuBarExtensionDelegate, DataHolder>: public TDelegateHolderBase<FMenuBarExtensionDelegate, DataHolder>
 {};
 
-template <class Subsystem>
-class TDelegateHolder<FPathMenuBarExtensionDelegate, Subsystem>: public TDelegateHolderBase<FPathMenuBarExtensionDelegate, FMenuBarBuilder, Subsystem>
+template <class DataHolder>
+class TDelegateHolder<FToolBarExtensionDelegate, DataHolder>: public TDelegateHolderBase<FToolBarExtensionDelegate, DataHolder>
 {};
 
-template <class Subsystem>
-class TDelegateHolder<FPathMenuExtensionDelegate, Subsystem>: public TDelegateHolderBase<FPathMenuExtensionDelegate, FMenuBuilder, Subsystem>
+template <class DataHolder>
+class TDelegateHolder<FOnGetContent, DataHolder>: public TDelegateHolderBase<FOnGetContent, DataHolder>
 {};
 
-template <class DelegateClass>	using TDelegateClassMap = TMap<FName, DelegateClass>;
+template <class DelegateClass> using TDelegateClassMap = TMap<FName, DelegateClass>;
 	
 using FDelegateMapTuples = TTuple<
 	TDelegateClassMap<FMenuExtensionDelegate>,
 	TDelegateClassMap<FMenuBarExtensionDelegate>,
-	TDelegateClassMap<FPathMenuBarExtensionDelegate>,
-	TDelegateClassMap<FPathMenuExtensionDelegate>
+	TDelegateClassMap<FToolBarExtensionDelegate>,
+	TDelegateClassMap<FOnGetContent>
 >;
 
 class FEditorPlusMenuBase;
@@ -141,17 +159,17 @@ public:
 	}
 
 	template <class DelegateClass>
-	static DelegateClass RegisterDelegate(const FName& UniqueId, const DelegateClass& Delegate)
+	static std::enable_if_t<std::is_void_v<typename DelegateClass::RetValType>, DelegateClass> RegisterDelegate(const FName& UniqueId, const DelegateClass& Delegate)
 	{
 		return TDelegateHolder<DelegateClass, FEditorPlusMenuManager>::Register(UniqueId, Delegate);	
 	}
 
-	template <class DelegateClass>
-	static DelegateClass UpdateDelegate(const FName& UniqueId, const DelegateClass& Delegate)
+	template <class DelegateClass, class UserClass, ESPMode Mode>
+	static std::enable_if_t<!std::is_void_v<typename DelegateClass::RetValType>, DelegateClass> RegisterDelegate(const TSharedRef<UserClass, Mode>& InUserObjectRef, const FName& UniqueId, const DelegateClass& Delegate)
 	{
-		return TDelegateHolder<DelegateClass, FEditorPlusMenuManager>::Update(UniqueId, Delegate);	
+		return TDelegateHolder<DelegateClass, FEditorPlusMenuManager>::Register(InUserObjectRef, UniqueId, Delegate);
 	}
-	
+
 	template <class DelegateClass>
 	static DelegateClass GetDelegate(const FName& UniqueId)
 	{

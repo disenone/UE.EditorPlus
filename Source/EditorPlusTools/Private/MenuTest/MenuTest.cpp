@@ -39,6 +39,7 @@ void FMenuTest::OnStartup()
 	BuildCustomMenu();
 	BuildMixMenu();
 	BuildExtendMenu();
+	BuildToolBar();
 	// BuildTestMenu();
 }
 
@@ -323,5 +324,43 @@ void FMenuTest::BuildTestMenu()
 
 	FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor").GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 }
+
+
+void FMenuTest::BuildToolBar()
+{
+
+	const auto ToolBar = FEditorPlusPath::RegisterPath("/<Hook>ProjectSettings/<ToolBar>MenuTestToolBar");
+
+	ToolBar->Content({
+		EP_NEW_MENU(FEditorPlusCommand)("ToolBarCommand1", NAME_None, LOCTEXT("ToolBarCommand1", "ToolBarCommand1"), LOCTEXT("ToolBarCommand1Tips", "ToolBarCommand1Tips"))
+		->BindAction(CreateClickLambda("ToolBarCommand1")),
+
+		EP_NEW_MENU(FEditorPlusCommand)("ToolBarCommand2", NAME_None, LOCTEXT("ToolBarCommand2", "ToolBarCommand2"), LOCTEXT("ToolBarCommand2Tips", "ToolBarCommand2Tips"))
+		->BindAction(CreateClickLambda("ToolBarCommand2")),
+
+		EP_NEW_MENU(FEditorPlusWidget)("ToolBarWidget", LOCTEXT("ToolBarWidget", "ToolBarWidget"))
+		->BindWidget(
+			SNew(SHorizontalBox)
+			 + SHorizontalBox::Slot()
+			 .AutoWidth()
+			 [
+				 SAssignNew(InputText, SEditableTextBox)
+				 .MinDesiredWidth(50)
+				 .Text(FText::FromName("ToolBarWidget"))
+			 ]
+			 + SHorizontalBox::Slot()
+			 .AutoWidth()
+			 .Padding(5, 0, 0, 0)
+			 [
+				 SNew(SButton)
+				 .Text(FText::FromName("ToolBarWidget"))
+				 .OnClicked(FOnClicked::CreateSP(this, &FMenuTest::OnClickButton))
+			 ]
+			)
+	});
+
+	Menus.Push(ToolBar);
+}
+
 
 #undef LOCTEXT_NAMESPACE

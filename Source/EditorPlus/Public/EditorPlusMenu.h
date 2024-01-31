@@ -28,7 +28,8 @@ BETTER_ENUM(EEditorPlusMenuType, uint8,
 	Section,
 	SubMenu,
 	Command,	
-	Widget
+	Widget,
+	ToolBar
 );
 
 class EDITORPLUS_API FEditorPlusMenuBase: public TSharedFromThis<FEditorPlusMenuBase>
@@ -283,14 +284,24 @@ public:
 		const FString& PathName, const FText& FriendlyName=FText::GetEmpty(), const FText& FriendlyTips=FText::GetEmpty());
 
 	virtual FDelegateHandle SubscribePreBuildMenu(const FMenuExtensionDelegate& MenuExtensionDelegate) { return FDelegateHandle(); }
-	virtual FDelegateHandle SubscribePreBuildMenuBar(const FMenuBarExtensionDelegate& MenuBarExtensionDelegate) { return FDelegateHandle(); }
 	virtual void UnsubscribePreBuildMenu(const FDelegateHandle& InHandler) { if(PreBuildMenuSubscribers.Contains(InHandler)) PreBuildMenuSubscribers.Remove(InHandler); }
+
+	virtual FDelegateHandle SubscribePreBuildMenuBar(const FMenuBarExtensionDelegate& MenuBarExtensionDelegate) { return FDelegateHandle(); }
 	virtual void UnsubscribePreBuildMenuBar(const FDelegateHandle& InHandler) { if(PreBuildMenuBarSubscribers.Contains(InHandler)) PreBuildMenuBarSubscribers.Remove(InHandler); }
+
+	virtual FDelegateHandle SubscribePreBuildToolBar(const FToolBarExtensionDelegate& ToolBarExtensionDelegate) { return FDelegateHandle(); }
+	virtual void UnsubscribePreBuildToolBar(const FDelegateHandle& InHandler) { if(PreBuildToolBarSubscribers.Contains(InHandler)) PreBuildToolBarSubscribers.Remove(InHandler); }
+
+	virtual void UnsubscribePreBuild(const FDelegateHandle& InHandler) { UnsubscribePreBuildMenu(InHandler); UnsubscribePreBuildMenuBar(InHandler); UnsubscribePreBuildToolBar(InHandler); }
 
 	virtual void PreBuildMenu(FMenuBuilder& MenuBuilder);
 	virtual void BuildMenu(FMenuBuilder& MenuBuilder);
+
 	virtual void PreBuildMenuBar(FMenuBarBuilder& MenuBuilder);
 	virtual void BuildMenuBar(FMenuBarBuilder& MenuBuilder) {}
+
+	virtual void PreBuildToolBar(FToolBarBuilder& ToolBarBuilder);
+	virtual void BuildToolBar(FToolBarBuilder& ToolBarBuilder) {}
 
 protected:
 
@@ -311,6 +322,18 @@ protected:
 	{
 		const auto Handler = FDelegateHandle(FDelegateHandle::GenerateNewHandle);
 		PreBuildMenuBarSubscribers.Add(Handler, MenuBarExtensionDelegate);
+		return Handler;
+	}
+
+	virtual void RegisterToolBarExtension(const FName& ExtensionHook, const EExtensionHook::Position Position);
+	virtual void OnToolBarExtension(FToolBarBuilder& ToolBarBuilder);
+	virtual TSharedRef<SWidget> OnToolBarContent();
+	static TSharedRef<SWidget> OnToolBarContentWrapper(TWeakPtr<FEditorPlusMenuBase> Self);
+	virtual void OnToolBarModuleChanged(FName ModuleThatChanged, EModuleChangeReason ReasonForChange);
+	virtual FDelegateHandle DoSubscribePreBuildToolBar(const FToolBarExtensionDelegate& ToolBarExtensionDelegate)
+	{
+		const auto Handler = FDelegateHandle(FDelegateHandle::GenerateNewHandle);
+		PreBuildToolBarSubscribers.Add(Handler, ToolBarExtensionDelegate);
 		return Handler;
 	}
 
@@ -352,10 +375,11 @@ protected:
 	// subscribe delegate
 	TMap<FDelegateHandle, FMenuExtensionDelegate> PreBuildMenuSubscribers;
 	TMap<FDelegateHandle, FMenuBarExtensionDelegate> PreBuildMenuBarSubscribers;
+	TMap<FDelegateHandle, FToolBarExtensionDelegate> PreBuildToolBarSubscribers;
 };
 
 
-// Root node, no children
+// Root node
 class EDITORPLUS_API FEditorPlusMenuBaseRoot: public FEditorPlusMenuBase
 {
 public:
@@ -371,7 +395,7 @@ public:
 };
 
 
-// Root node, no children
+// Common node
 class EDITORPLUS_API FEditorPlusMenuBaseNode: public FEditorPlusMenuBase
 {
 public:
@@ -476,6 +500,7 @@ public:
 		return Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::None)
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook)
 			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuBar)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::ToolBar)
 		;
 	}
 
@@ -675,4 +700,43 @@ public:
 	}
 protected:
 	TSharedPtr<SWidget> Widget;
+};
+
+
+class EDITORPLUS_API FEditorPlusToolBar: public FEditorPlusMenuBaseNode
+{
+public:
+	using FBaseType = FEditorPlusMenuBaseNode;
+
+	explicit FEditorPlusToolBar(
+		const FName& InName, const FName& InHook = NAME_None,
+		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty())
+		: FBaseType(InName, InHook, InFriendlyName, InFriendlyTips) {}
+
+	virtual void BuildToolBar(FToolBarBuilder& ToolBarBuilder) override;
+
+	virtual EEditorPlusMenuType GetType() const override { return StaticType(); }
+	static EEditorPlusMenuType StaticType() { return EEditorPlusMenuType::ToolBar; }
+
+	virtual TSharedRef<FEditorPlusMenuBase> RegisterExtension(
+		const FName& ExtensionHook, const EExtensionHook::Position Position) override
+	{
+		RegisterToolBarExtension(ExtensionHook, Position);
+		return AsShared();
+	}
+
+	virtual bool AllowChild(const TSharedRef<FEditorPlusMenuBase>& Child) const override
+	{
+		const auto Type = Child->GetType();
+		return Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::None)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::Hook)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::MenuBar)
+			&& Type != EEditorPlusMenuType::_from_integral(EEditorPlusMenuType::ToolBar)
+		;
+	}
+
+	virtual FDelegateHandle SubscribePreBuildMenuBar(const FMenuBarExtensionDelegate& MenuExtensionDelegate) override
+	{
+		return DoSubscribePreBuildMenuBar(MenuExtensionDelegate);
+	}
 };

@@ -54,14 +54,6 @@ void FEditorPlusMenuBase::BuildMenu(FMenuBuilder& MenuBuilder)
 	}
 }
 
-void FEditorPlusMenuBase::PreBuildMenuBar(FMenuBarBuilder& MenuBuilder)
-{
-	for (auto& Subscriber: PreBuildMenuBarSubscribers)
-	{
-		Subscriber.Get<1>().ExecuteIfBound(MenuBuilder);
-	}
-}
-
 TSharedRef<FEditorPlusMenuBase> FEditorPlusMenuBase::RegisterPath()
 {
 	
@@ -79,7 +71,7 @@ void FEditorPlusMenuBase::RegisterMenuExtension(const FName& ExtensionHook, cons
 	MenuExtender->AddMenuExtension(
 		ExtensionHook, Position,
 		nullptr,
-		FEditorPlusMenuManager::RegisterDelegate(
+		FEditorPlusMenuManager::RegisterDelegate<FMenuExtensionDelegate>(
 			GetUniqueId(),
 			FMenuExtensionDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuExtension))
 	);
@@ -99,8 +91,9 @@ void FEditorPlusMenuBase::OnMenuModuleChanged(FName ModuleThatChanged, EModuleCh
 {
 	if (ModuleThatChanged == FEditorPlusModule::GetName() && ReasonForChange == EModuleChangeReason::ModuleLoaded)
 	{
-		FEditorPlusMenuManager::UpdateDelegate(GetUniqueId(), FMenuExtensionDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuExtension));
-	}		
+		FEditorPlusMenuManager::RegisterDelegate(GetUniqueId(), FMenuExtensionDelegate::CreateSP(this, &FEditorPlusMenuBase::OnMenuExtension));
+		FEditorPlusMenuManager::RegisterDelegate(AsShared(), GetUniqueId(), FOnGetContent::CreateStatic(&FEditorPlusMenuBase::OnToolBarContentWrapper, AsWeak()));
+	}
 }
 
 void FEditorPlusMenuBase::UnregisterExtension()
@@ -109,6 +102,7 @@ void FEditorPlusMenuBase::UnregisterExtension()
 	{
 		FEditorPlusMenuManager::RemoveDelegate<FMenuExtensionDelegate>(GetUniqueId());
 		FEditorPlusMenuManager::RemoveDelegate<FMenuBarExtensionDelegate>(GetUniqueId());
+		FEditorPlusMenuManager::RemoveDelegate<FToolBarExtensionDelegate>(GetUniqueId());
 		FEditorPlusMenuManager::UnregisterPath(ExtHook.ToString(), GetUniqueId());
 		FEditorPlusUtils::GetLevelEditorModule().GetMenuExtensibilityManager()->RemoveExtender(MenuExtender);
 		MenuExtender.Reset();
@@ -120,6 +114,14 @@ void FEditorPlusMenuBase::UnregisterExtension()
 	}
 }
 
+
+void FEditorPlusMenuBase::PreBuildMenuBar(FMenuBarBuilder& MenuBuilder)
+{
+	for (auto& Subscriber: PreBuildMenuBarSubscribers)
+	{
+		Subscriber.Get<1>().ExecuteIfBound(MenuBuilder);
+	}
+}
 
 void FEditorPlusMenuBase::RegisterMenuBarExtension(const FName& ExtensionHook, const EExtensionHook::Position Position)
 {
@@ -152,6 +154,64 @@ void FEditorPlusMenuBase::OnMenuBarModuleChanged(FName ModuleThatChanged, EModul
 	OnMenuModuleChanged(ModuleThatChanged, ReasonForChange);
 }
 
+
+void FEditorPlusMenuBase::PreBuildToolBar(FToolBarBuilder& ToolBarBuilder)
+{
+	for (auto& Subscriber: PreBuildToolBarSubscribers)
+	{
+		Subscriber.Get<1>().ExecuteIfBound(ToolBarBuilder);
+	}
+}
+
+void FEditorPlusMenuBase::RegisterToolBarExtension(const FName& ExtensionHook, const EExtensionHook::Position Position)
+{
+	UnregisterExtension();
+	MenuExtender = MakeShared<FExtender>();
+	MenuExtender->AddToolBarExtension(
+		ExtensionHook, Position,
+		nullptr,
+		FEditorPlusMenuManager::RegisterDelegate(
+			GetUniqueId(),
+			FToolBarExtensionDelegate::CreateSP(this, &FEditorPlusMenuBase::OnToolBarExtension))
+	);
+
+	FEditorPlusUtils::GetLevelEditorModule().GetToolBarExtensibilityManager()->AddExtender(MenuExtender);
+
+	FEditorPlusMenuManager::RegisterDelegate(AsShared(), GetUniqueId(), FOnGetContent::CreateStatic(&FEditorPlusMenuBase::OnToolBarContentWrapper, AsWeak()));
+
+	ModuleChangedHandler = FModuleManager::Get().OnModulesChanged().AddSP(this, &FEditorPlusMenuBase::OnToolBarModuleChanged);
+
+	RegisterPath();
+}
+
+void FEditorPlusMenuBase::OnToolBarExtension(FToolBarBuilder& ToolBarBuilder)
+{
+	BuildToolBar(ToolBarBuilder);
+}
+
+
+TSharedRef<SWidget> FEditorPlusMenuBase::OnToolBarContentWrapper(TWeakPtr<FEditorPlusMenuBase> Owner)
+{
+	if (Owner.IsValid())
+	{
+		const auto OwnerPtr = Owner.Pin();
+		if(!OwnerPtr->IsDestroyed()) return OwnerPtr->OnToolBarContent();
+	}
+	return SNullWidget::NullWidget;
+}
+
+TSharedRef<SWidget> FEditorPlusMenuBase::OnToolBarContent()
+{
+	FMenuBuilder MenuBuilder(true, nullptr);
+	BuildMenu(MenuBuilder);
+	return MenuBuilder.MakeWidget();
+}
+
+void FEditorPlusMenuBase::OnToolBarModuleChanged(FName ModuleThatChanged, EModuleChangeReason ReasonForChange)
+{
+	OnMenuModuleChanged(ModuleThatChanged, ReasonForChange);
+}
+
 TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuBase::CreateByPathName(const FString& PathName, const FText& FriendlyName, const FText& FriendlyTips)
 {
 	auto TypeAndName = FEditorPlusMenuBase::GetTypeAndNameByPathName(PathName);
@@ -171,6 +231,8 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuBase::CreateByPathName(const FStr
 			return MakeShared<FEditorPlusSeparator>(Name);
 		case EEditorPlusMenuType::Command:
 			return MakeShared<FEditorPlusCommand>(Name, Name, FriendlyName, FriendlyTips);
+		case EEditorPlusMenuType::ToolBar:
+			return MakeShared<FEditorPlusToolBar>(Name, Name, FriendlyName, FriendlyTips);
 		default:
 			return nullptr;
 	}
@@ -204,7 +266,6 @@ void FEditorPlusMenuBar::OnMenuExtension(FMenuBuilder& MenuBuilder)
 //
 // endregion FEditorPlusMenuBar
 // ---------------------------------------------------------------------
-
 
 
 // ---------------------------------------------------------------------
@@ -330,4 +391,27 @@ void FEditorPlusWidget::BuildMenu(FMenuBuilder& MenuBuilder)
 
 //
 // endregion FEditorPlusWidget
+// ---------------------------------------------------------------------
+
+// ---------------------------------------------------------------------
+// region FEditorPlusToolBar
+//
+
+void FEditorPlusToolBar::BuildToolBar(FToolBarBuilder& ToolBarBuilder)
+{
+	PreBuildToolBar(ToolBarBuilder);
+
+	ToolBarBuilder.SetLabelVisibility(EVisibility::Visible);
+	ToolBarBuilder.AddComboButton(
+		FUIAction(),
+		FEditorPlusMenuManager::GetDelegate<FOnGetContent>(GetUniqueId()),
+		GetFriendlyName(),
+		GetFriendlyTips(),
+		FSlateIcon(),
+		false
+	);
+}
+
+//
+// endregion FEditorPlusToolBar
 // ---------------------------------------------------------------------
