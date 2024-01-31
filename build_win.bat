@@ -42,7 +42,7 @@ goto :exit
     rmdir /s /q %OUTPUT%\EditorPlus\ue%VER%\EditorPlus\Intermediate"
     del /q "%OUTPUT%\EditorPlus\ue%VER%\*.zip" > nul
     call %ZIP% a -tzip "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus_ue%VER%_win.zip" "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus" > nul
-    xcopy /y "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus_ue%VER%_win.zip" "%OUTPUT%\EditorPlus\"
+    xcopy /y "%OUTPUT%\EditorPlus\ue%VER%\EditorPlus_ue%VER%.zip" "%OUTPUT%\EditorPlus\"
 goto :eof
 
 :help
