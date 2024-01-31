@@ -402,6 +402,7 @@ void FEditorPlusToolBar::BuildToolBar(FToolBarBuilder& ToolBarBuilder)
 	PreBuildToolBar(ToolBarBuilder);
 
 	ToolBarBuilder.SetLabelVisibility(EVisibility::Visible);
+	ToolBarBuilder.AddSeparator(Hook);
 	ToolBarBuilder.AddComboButton(
 		FUIAction(),
 		FEditorPlusMenuManager::GetDelegate<FOnGetContent>(GetUniqueId()),

@@ -332,10 +332,10 @@ void FMenuTest::BuildToolBar()
 	const auto ToolBar = FEditorPlusPath::RegisterPath("/<Hook>ProjectSettings/<ToolBar>MenuTestToolBar");
 
 	ToolBar->Content({
-		EP_NEW_MENU(FEditorPlusCommand)("ToolBarCommand1", NAME_None, LOCTEXT("ToolBarCommand1", "ToolBarCommand1"), LOCTEXT("ToolBarCommand1Tips", "ToolBarCommand1Tips"))
+		EP_NEW_MENU(FEditorPlusCommand)("ToolBarCommand1", "ToolBarCommand1", LOCTEXT("ToolBarCommand1", "ToolBarCommand1"), LOCTEXT("ToolBarCommand1Tips", "ToolBarCommand1Tips"))
 		->BindAction(CreateClickLambda("ToolBarCommand1")),
 
-		EP_NEW_MENU(FEditorPlusCommand)("ToolBarCommand2", NAME_None, LOCTEXT("ToolBarCommand2", "ToolBarCommand2"), LOCTEXT("ToolBarCommand2Tips", "ToolBarCommand2Tips"))
+		EP_NEW_MENU(FEditorPlusCommand)("ToolBarCommand2", "ToolBarCommand2", LOCTEXT("ToolBarCommand2", "ToolBarCommand2"), LOCTEXT("ToolBarCommand2Tips", "ToolBarCommand2Tips"))
 		->BindAction(CreateClickLambda("ToolBarCommand2")),
 
 		EP_NEW_MENU(FEditorPlusWidget)("ToolBarWidget", LOCTEXT("ToolBarWidget", "ToolBarWidget"))
