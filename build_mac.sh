@@ -20,9 +20,11 @@ package(){
     cp "${CWD}/Config/FilterPlugin.ini" "${POUTPUT}/Config/"
     rm -rf "${POUTPUT}/Binaries"
     rm -rf "${POUTPUT}/Intermediate"
-    rm -rf "${POUTPUT}/*.zip"
-    ${ZIP} -r -q "${OUTPUT}/EditorPlus/ue${VER}/EditorPlus_ue${VER}_mac.zip" "${POUTPUT}"
-    cp "${OUTPUT}/EditorPlus/ue${VER}/EditorPlus_ue${VER}_mac.zip" "${OUTPUT}/EditorPlus/"
+    cd "${POUTPUT}/../"
+    rm -rf "*.zip"
+    ${ZIP} -r -q "EditorPlus_ue${VER}.zip" "EditorPlus"
+    cp *.zip "${OUTPUT}/EditorPlus/"
+    cd "${CWD}"
 }
 
 
