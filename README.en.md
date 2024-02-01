@@ -14,9 +14,9 @@ https://github.com/disenone/UE.EditorPlus/assets/2453074/9d719361-d0b1-4c7c-ba71
 
 English: [UE Editor Plugin UE.EditorPlus Documentation](https://disenone.github.io/wiki/en/ue-%E7%BC%96%E8%BE%91%E5%99%A8%E6%8F%92%E4%BB%B6-EditorPlus/)
 
-## Extending the Editor Menu
+## Extending the Editor Menu / Toolbar
 
-Supports path-based menu extension, instantiated menu extension, and mixed menu extension.
+Supports path-based extension, instantiated extension, and mixed extension.
 
 ```cpp
 FEditorPlusPath::RegisterPathAction(
@@ -29,6 +29,8 @@ FEditorPlusPath::RegisterPathAction(
 ```
 
 ![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/menu.png)
+
+![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/toolbar.png)
 
 ## Practical Tools
 

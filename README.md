@@ -14,9 +14,9 @@ https://github.com/disenone/UE.EditorPlus/assets/2453074/9d719361-d0b1-4c7c-ba71
 
 English：[UE Editor Plugin UE.EditorPlus Documentation](https://disenone.github.io/wiki/en/ue-%E7%BC%96%E8%BE%91%E5%99%A8%E6%8F%92%E4%BB%B6-EditorPlus/)
 
-## 扩展编辑器菜单
+## 扩展编辑器菜单/工具栏
 
-支持路径扩展菜单，实例化扩展菜单，混合扩展菜单。
+支持路径扩展，实例化扩展，混合扩展。
 
 ```cpp
 FEditorPlusPath::RegisterPathAction(
@@ -29,6 +29,8 @@ FEditorPlusPath::RegisterPathAction(
 ```
 
 ![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/menu.png)
+
+![](https://disenone.github.io/wiki/assets/img/2024-ue-editorplus/toolbar.png)
 
 ## 实用工具
 
