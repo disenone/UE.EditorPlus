@@ -11,6 +11,7 @@
 #include <Widgets/Text/SRichTextBlock.h>
 #include <Widgets/Layout/SScrollBox.h>
 #include <Styling/SlateStyle.h>
+#include <WIdgets/Text/SMultiLineEditableText.h>
 
 
 using namespace ClassBrowser_Detail;
@@ -230,18 +231,16 @@ void SClassBrowserTab::Construct(const FArguments& InArgs)
 						SNew(SBorder)
 						[
 							SNew(SScrollBox)
-							.Orientation(Orient_Horizontal)
+							.Orientation(Orient_Vertical)
 							+ SScrollBox::Slot()
-							.Padding(FMargin(5, 5))
 							[
-								SNew(SScrollBox)
-								.Orientation(Orient_Vertical)
-								+ SScrollBox::Slot()
-								[
-									SAssignNew(DetailText, STextBlock)
-									.Font(FCoreStyle::GetDefaultFontStyle("Regular", DetailFontSize))
-								]
-							]	
+								SAssignNew(DetailText, SMultiLineEditableText)
+								.Font(FCoreStyle::GetDefaultFontStyle("Regular", DetailFontSize))
+								.AllowMultiLine(true)
+								.AutoWrapText(true)
+								.IsReadOnly(true)
+								.AllowContextMenu(true)
+							]
 						]
 					]
 				]

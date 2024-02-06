@@ -6,6 +6,8 @@
 #include "ClassItem.h"
 #include <Widgets/SCompoundWidget.h>
 
+class SMultiLineEditableText;
+
 class SClassBrowserTab final : public SCompoundWidget
 {
 	SLATE_BEGIN_ARGS(SClassBrowserTab)
@@ -78,7 +80,7 @@ private:
 	
 	// detail
 	TSharedPtr<SVerticalBox>	DetailPanel;
-	TSharedPtr<STextBlock>		DetailText;
+	TSharedPtr<SMultiLineEditableText>		DetailText;
 	uint8						DetailFontSize=10;
 
 	// class record
