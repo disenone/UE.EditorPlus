@@ -18,7 +18,7 @@ public:
 		if (Icon.GetStyleSetName() == FAppStyle::GetAppStyleSetName())
 		{
 			return FString::Format(
-					TEXT("const FName AppStyleSetName = FAppStyle::GetAppStyleSetName();const FSlateIcon Icon(AppStyleSetName, \"{0}\");"),
+					TEXT("const FSlateIcon Icon(FAppStyle::GetAppStyleSetName(), \"{0}\");"),
 					{ Icon.GetStyleName().ToString() }
 				);
 		}
