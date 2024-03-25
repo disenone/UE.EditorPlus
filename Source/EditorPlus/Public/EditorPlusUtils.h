@@ -25,24 +25,17 @@ public:
 };
 
 
-namespace EditorPlus
-{
-
 // black magic to expose private members
 // usage example:
-//		template struct EditorPlus::FExposedPrivate<&FUICommandList::UICommandBindingMap>;
-//		TMap< const TSharedPtr< const FUICommandInfo >, FUIAction >& EditorPlus::ExposePrivate(FUICommandList&);
-//		EditorPlus::ExposePrivate(FEditorPlusUtils::GetLevelEditorModule().GetGlobalLevelEditorActions().Get())
-template<auto M> struct FExposedPrivate;
-
-template<class T, class U, T U::*M>
-struct FExposedPrivate<M> {
-	friend T& ExposePrivate(U& u) {
-		return u.*M;
-	}
-	friend const T& ExposePrivate(const U& u) {
-		return u.*M;
-	}
-};
-
-}
+//     using FExposedIconsType = TMap<FName, FSlateBrush*>;
+//     EP_EXPOSE_PRIVATE(ExposedIcons, FSlateStyleSet, FExposedIconsType, BrushResources);
+#define EP_EXPOSE_PRIVATE(Name, Class, MemberType, MemberName) \
+	template<auto M> struct F##Name;	\
+	template<class T, class U, T U::*M>	\
+	struct F##Name<M> {					\
+		friend T& Name(U& u) { return u.*M;	}	\
+		friend const T& Name(const U& u) { return u.*M; }	\
+	};									\
+	template struct F##Name<&Class::MemberName>;	\
+	MemberType& Name(Class&);	\
+	const MemberType& Name(const Class&);

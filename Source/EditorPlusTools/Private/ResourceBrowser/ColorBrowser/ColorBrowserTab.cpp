@@ -1,20 +1,18 @@
 ﻿
-#include "IconBrowserTab.h"
+#include "ColorBrowserTab.h"
 #include "EditorPlusUtils.h"
-#include "EditorPlusToolsLog.h"
 
 #include <regex>
 #include <Widgets/Input/SSearchBox.h>
 
 #include "WIdgets/Text/SMultiLineEditableText.h"
 
-const static FString DefaultIconDetail("Click Icon to Select One\n[Total Num]: {0}");
-const static FText DefaultIconName = FText::FromString("No Icon is Selected");
-const static FSlateIcon DefaultIcon(FAppStyle::GetAppStyleSetName(), "Default");
+const static FString DefaultColorDetail("Click Color to Select One\n[Total Num]: {0}");
+const static FText DefaultColorName = FText::FromString("No Color is Selected");
 
-void SIconBrowserTab::Construct(const FArguments& InArgs)
+void SColorBrowserTab::Construct(const FArguments& InArgs)
 {
-	IconAllList = *FIconInfo::CollectIcons();
+	ColorAllList = *FColorInfo::CollectColors();
 
 	ChildSlot
 	[
@@ -23,7 +21,7 @@ void SIconBrowserTab::Construct(const FArguments& InArgs)
 
 }
 
-TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
+TSharedRef<SWidget> SColorBrowserTab::ConstructContent()
 {
 	return SNew(SVerticalBox)
 		// search
@@ -32,17 +30,17 @@ TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
 		[
 			SNew(SBorder)
 			[
-				SAssignNew(IconSearchBox, SSearchBox)
-				.OnTextChanged(this, &SIconBrowserTab::OnSearchIcon)
+				SAssignNew(ColorSearchBox, SSearchBox)
+				.OnTextChanged(this, &SColorBrowserTab::OnSearchColor)
 			]
 		]
-		// icon tile view
+		// Color tile view
 		+ SVerticalBox::Slot()
 		.FillHeight(0.8f)
 		[
-			SAssignNew(IconView, SIconView)
-			.ListItemsSource(&IconAllList)
-			.OnGenerateTile(this, &SIconBrowserTab::OnIconTile)
+			SAssignNew(ColorView, SColorView)
+			.ListItemsSource(&ColorAllList)
+			.OnGenerateTile(this, &SColorBrowserTab::OnColorTile)
 
 		]
 		// detail
@@ -54,7 +52,7 @@ TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
 			.HeightOverride(128)
 			[
 				SNew(SHorizontalBox)
-				// icon and reset button
+				// Color and reset button
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
 				[
@@ -72,9 +70,9 @@ TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
 							[
 								SNew(SBorder)
 								[
-									SAssignNew(DetailIcon, SImage)
+									SAssignNew(DetailColor, SImage)
 									.DesiredSizeOverride(FVector2d(64, 64))
-									.Image(DefaultIcon.GetIcon())
+									.Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Default").GetIcon())
 								]
 							]
 						]
@@ -84,12 +82,12 @@ TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
 							SNew(SBox)
 							.HeightOverride(32)
 							[
-								SAssignNew(SelectedIconName, SMultiLineEditableText)
+								SAssignNew(SelectedColorName, SMultiLineEditableText)
 								.AutoWrapText(true)
 								.AllowMultiLine(true)
 								.IsReadOnly(true)
 								.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
-								.Text(DefaultIconName)
+								.Text(DefaultColorName)
 							]
 
 						]
@@ -102,7 +100,7 @@ TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
 								.HAlign(HAlign_Center)
 								.VAlign(VAlign_Center)
 								.Text(FText::FromString("Reset"))
-								.OnClicked(this, &SIconBrowserTab::OnResetIcon)
+								.OnClicked(this, &SColorBrowserTab::OnResetColor)
 							]
 						]
 					]
@@ -127,7 +125,7 @@ TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
 						.AllowMultiLine(true)
 						.IsReadOnly(true)
 						.AllowContextMenu(true)
-						.Text(FText::FromString(FString::Format(*DefaultIconDetail, {IconAllList.Num()})))
+						.Text(FText::FromString(FString::Format(*DefaultColorDetail, {ColorAllList.Num()})))
 					]
 				]
 			]]
@@ -135,7 +133,7 @@ TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
 	;
 }
 
-TSharedRef<ITableRow> SIconBrowserTab::OnIconTile(FIconType InItem, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SColorBrowserTab::OnColorTile(FColorType InItem, const TSharedRef<STableViewBase>& OwnerTable)
 {
 	return
 		SNew(STableRow< TSharedPtr<FString> >, OwnerTable)
@@ -150,21 +148,22 @@ TSharedRef<ITableRow> SIconBrowserTab::OnIconTile(FIconType InItem, const TShare
 					SNew(SBorder)
 					[
 						SNew(SImage)
-						.Image(InItem->Icon.GetIcon())
+						// .Image(InItem->Color.GetColor())
 						.DesiredSizeOverride(FVector2d(64, 64))
+						.ColorAndOpacity(InItem->Color)
 					]
 				]
 				.OnClicked_Lambda([this, InItem]()
 				{
-					return this->OnClickIcon(InItem);
+					return this->OnClickColor(InItem);
 				})
 				.OnHovered_Lambda([this, InItem]()
 				{
-					return this->OnHoverIcon(InItem);
+					return this->OnHoverColor(InItem);
 				})
 				.OnUnhovered_Lambda([this, InItem]()
 				{
-					return this->OnUnhoverIcon(InItem);
+					return this->OnUnhoverColor(InItem);
 				})
 			]
 			+ SVerticalBox::Slot()
@@ -180,41 +179,41 @@ TSharedRef<ITableRow> SIconBrowserTab::OnIconTile(FIconType InItem, const TShare
 		];
 }
 
-void SIconBrowserTab::OnSearchIcon(const FText& InFilterText)
+void SColorBrowserTab::OnSearchColor(const FText& InFilterText)
 {
-	if (IconSearchTimer.IsValid())
+	if (ColorSearchTimer.IsValid())
 	{
-		UnRegisterActiveTimer(IconSearchTimer.ToSharedRef());
+		UnRegisterActiveTimer(ColorSearchTimer.ToSharedRef());
 	}
 
-	IconSearchTimer = RegisterActiveTimer(IconSearchDelay, FWidgetActiveTimerDelegate::CreateLambda(
+	ColorSearchTimer = RegisterActiveTimer(ColorSearchDelay, FWidgetActiveTimerDelegate::CreateLambda(
 	[self = SharedThis(this)](double, double)
 	{
-		self->IconSearchTimer.Reset();
-		self->UpdateIconList();
+		self->ColorSearchTimer.Reset();
+		self->UpdateColorList();
 		return EActiveTimerReturnType::Stop;
 	}));
 }
 
-void SIconBrowserTab::UpdateIconList()
+void SColorBrowserTab::UpdateColorList()
 {
-	const FString FilterStr = IconSearchBox->GetText().ToString();
+	const FString FilterStr = ColorSearchBox->GetText().ToString();
 
 	if (FilterStr.IsEmpty())
 	{
-		IconView->SetItemsSource(&IconAllList);
+		ColorView->SetItemsSource(&ColorAllList);
 	}
 	else
 	{
-		IconList.Empty();
-		IconView->SetItemsSource(&IconList);
+		ColorList.Empty();
+		ColorView->SetItemsSource(&ColorList);
 
 		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FEditorPlusUtils::SplitString(FilterStr, " "), TEXT(".*?")) + TEXT(")(.*)");
 		const std::wregex Pattern = std::wregex(TCHAR_TO_WCHAR(ToCStr(PatternStr)), std::regex::icase);
-		using FMatchItemType = TTuple<uint16, uint16, TSharedPtr<FIconInfo>>;
+		using FMatchItemType = TTuple<uint16, uint16, TSharedPtr<FColorInfo>>;
 		TArray<FMatchItemType> MatchItems;
 
-		for (TSharedRef<FIconInfo> Item: IconAllList)
+		for (TSharedRef<FColorInfo> Item: ColorAllList)
 		{
 			std::wsmatch MatchResult;
 			const std::wstring SearchText(TCHAR_TO_WCHAR(ToCStr(Item->FriendlyName)));
@@ -222,7 +221,7 @@ void SIconBrowserTab::UpdateIconList()
 
 			if (MatchResult.empty() || !MatchResult.ready()) continue;
 
-			MatchItems.Push(MakeTuple<uint16, uint16, TSharedPtr<FIconInfo>>(
+			MatchItems.Push(MakeTuple<uint16, uint16, TSharedPtr<FColorInfo>>(
 				MatchResult[1].length(), MatchResult[2].length(), Item));
 		}
 
@@ -243,82 +242,82 @@ void SIconBrowserTab::UpdateIconList()
 			});
 			for (FMatchItemType& MatchItem: MatchItems)
 			{
-				IconList.Push(MatchItem.Get<2>().ToSharedRef());
+				ColorList.Push(MatchItem.Get<2>().ToSharedRef());
 			}
 		}
 	}
 
-	if (IconView.IsValid())
+	if (ColorView.IsValid())
 	{
-		IconView->RebuildList();
-		IconView->RequestListRefresh();
-		IconView->ScrollToTop();
+		ColorView->RebuildList();
+		ColorView->RequestListRefresh();
+		ColorView->ScrollToTop();
 	}
 }
 
-FString BuildDetail(const FString& Action, const SIconBrowserTab::FIconType& Icon)
+FString BuildDetail(const FString& Action, const SColorBrowserTab::FColorType& InColor)
 {
-	FString Usage = Icon->Usage.Replace(TEXT("\n"), TEXT(" "));
+	FString Usage = InColor->Usage.Replace(TEXT("\n"), TEXT(" "));
+
+	FLinearColor Color = InColor->Color.GetColor(FWidgetStyle());
 
 	return FString::Format(
 		TEXT(
 			"[{0}]: {1}\n"
-			"[Size]: {2} x {3}\n"
-			"[Resource]: {5}\n"
-			"[Usage]: {4}"),
+			"[RGBA]: {2}\n"
+			"[Usage]: {3}\n"),
 		{
 			Action,
-			Icon->FriendlyName,
-			static_cast<int>(Icon->Size.X),
-			static_cast<int>(Icon->Size.Y),
+			InColor->FriendlyName,
+			InColor->Color.GetColor(FWidgetStyle()).ToString(),
 			Usage,
-			FPaths::ConvertRelativePathToFull(Icon->ResourceName.ToString())}
+			}
 		);
 }
 
-FReply SIconBrowserTab::OnClickIcon(const FIconType& InItem)
+FReply SColorBrowserTab::OnClickColor(const FColorType& InItem)
 {
-	if (SelectedIcon == InItem)
+	if (SelectedColor == InItem)
 	{
-		return OnResetIcon();
+		return OnResetColor();
 	}
 
-	SelectedIcon = InItem;
-	return OnSelectIcon("Clicked", InItem);
+	SelectedColor = InItem;
+	return OnSelectColor("Clicked", InItem);
 }
 
-void SIconBrowserTab::OnHoverIcon(const FIconType& InItem)
+void SColorBrowserTab::OnHoverColor(const FColorType& InItem)
 {
-	if (!SelectedIcon.IsValid())
+	if (!SelectedColor.IsValid())
 	{
-		OnSelectIcon("Hovered", InItem);
-	}
-}
-
-void SIconBrowserTab::OnUnhoverIcon(const FIconType& InItem)
-{
-	if (!SelectedIcon.IsValid())
-	{
-		OnResetIcon();
+		OnSelectColor("Hovered", InItem);
 	}
 }
 
-FReply SIconBrowserTab::OnResetIcon()
+void SColorBrowserTab::OnUnhoverColor(const FColorType& InItem)
 {
-	SelectedIcon.Reset();
+	if (!SelectedColor.IsValid())
+	{
+		OnResetColor();
+	}
+}
 
-	SelectedIconName->SetText(DefaultIconName);
-	DetailIcon->SetImage(DefaultIcon.GetIcon());
-	DetailText->SetText(FText::FromString(FString::Format(*DefaultIconDetail, {IconAllList.Num()})));
+FReply SColorBrowserTab::OnResetColor()
+{
+	SelectedColor.Reset();
+
+	SelectedColorName->SetText(DefaultColorName);
+	DetailColor->SetColorAndOpacity(FLinearColor::White);
+	DetailText->SetText(FText::FromString(FString::Format(*DefaultColorDetail, {ColorAllList.Num()})));
 
 	return FReply::Handled();
 }
 
-FReply SIconBrowserTab::OnSelectIcon(const FString& InAction, const FIconType& InIcon)
+FReply SColorBrowserTab::OnSelectColor(const FString& InAction, const FColorType& InColor)
 {
-	SelectedIconName->SetText(FText::FromString(InIcon->SimpleName));
-	DetailIcon->SetImage(InIcon->Icon.GetIcon());
-	DetailText->SetText(FText::FromString(BuildDetail(InAction, InIcon)));
+	SelectedColorName->SetText(FText::FromString(InColor->SimpleName));
+	DetailColor->SetColorAndOpacity(InColor->Color);
+	DetailText->SetText(FText::FromString(BuildDetail(InAction, InColor)));
 
 	return FReply::Handled();
 }
