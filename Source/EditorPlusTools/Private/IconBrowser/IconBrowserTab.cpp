@@ -8,6 +8,9 @@
 
 #include "WIdgets/Text/SMultiLineEditableText.h"
 
+const static FText DefaultDetail = FText::FromString("Click to Select One Icon");
+const static FText DefaultIconName = FText::FromString("No Icon is Selected");
+
 void SIconBrowserTab::Construct(const FArguments& InArgs)
 {
 	IconAllList = *FIconInfo::CollectIcons();
@@ -22,6 +25,7 @@ void SIconBrowserTab::Construct(const FArguments& InArgs)
 TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
 {
 	return SNew(SVerticalBox)
+		// search
 		+ SVerticalBox::Slot()
 		.AutoHeight()
 		[
@@ -31,6 +35,7 @@ TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
 				.OnTextChanged(this, &SIconBrowserTab::OnSearchIcon)
 			]
 		]
+		// icon tile view
 		+ SVerticalBox::Slot()
 		.FillHeight(0.8f)
 		[
@@ -39,18 +44,92 @@ TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
 			.OnGenerateTile(this, &SIconBrowserTab::OnIconTile)
 
 		]
+		// detail
 		+ SVerticalBox::Slot()
-		.FillHeight(0.2f)
+		.AutoHeight()
 		[
-			SNew(SBorder)
-			.Padding(2.0f, 8.0f)
+			SNew(SBorder)[
+			SNew(SBox)
+			.HeightOverride(128)
 			[
-				SAssignNew(DetailText, SMultiLineEditableText)
-				.AutoWrapText(true)
-				.AllowMultiLine(true)
-				.IsReadOnly(true)
-				.AllowContextMenu(true)
-			]
+				SNew(SHorizontalBox)
+				// icon and reset button
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SBox)
+					.WidthOverride(128)
+					[
+						SNew(SVerticalBox)
+						+ SVerticalBox::Slot()
+						.AutoHeight()
+						[
+							SNew(SBox)
+							.VAlign(VAlign_Center)
+							.HAlign(HAlign_Center)
+							.HeightOverride(72)
+							[
+								SNew(SBorder)
+								[
+									SAssignNew(DetailIcon, SImage)
+									.DesiredSizeOverride(FVector2d(64, 64))
+									.Image(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Default").GetIcon())
+								]
+							]
+						]
+						+ SVerticalBox::Slot()
+						.AutoHeight()
+						[
+							SNew(SBox)
+							.HeightOverride(32)
+							[
+								SAssignNew(SelectedIconName, SMultiLineEditableText)
+								.AutoWrapText(true)
+								.AllowMultiLine(true)
+								.IsReadOnly(true)
+								.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
+								.Text(DefaultIconName)
+							]
+
+						]
+						+ SVerticalBox::Slot()
+						.AutoHeight()
+						[
+							SNew(SBox)
+							[
+								SNew(SButton)
+								.HAlign(HAlign_Center)
+								.VAlign(VAlign_Center)
+								.Text(FText::FromString("Reset"))
+								.OnClicked(this, &SIconBrowserTab::OnResetIcon)
+							]
+						]
+					]
+				]
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SBox)
+					.WidthOverride(3.0f)
+					[SNew(SSeparator).SeparatorImage(FCoreStyle::Get().GetBrush( "Border" ))]
+				]
+
+				// detail text
+				+ SHorizontalBox::Slot()
+				[
+					SNew(SBox)
+					.Padding(2.0f, 8.0f)
+					[
+						SAssignNew(DetailText, SMultiLineEditableText)
+						.AutoWrapText(true)
+						.AllowMultiLine(true)
+						.IsReadOnly(true)
+						.AllowContextMenu(true)
+						.Text(DefaultDetail)
+					]
+				]
+			]]
 		]
 	;
 }
@@ -166,7 +245,6 @@ void SIconBrowserTab::UpdateIconList()
 				IconList.Push(MatchItem.Get<2>().ToSharedRef());
 			}
 		}
-
 	}
 
 	if (IconView.IsValid())
@@ -179,46 +257,67 @@ void SIconBrowserTab::UpdateIconList()
 
 FString BuildDetail(const FString& Action, const SIconBrowserTab::FIconType& Icon)
 {
-	FString Usage = Icon->Usage.Replace(TEXT("\n"), TEXT("\n\t"));
+	FString Usage = Icon->Usage.Replace(TEXT("\n"), TEXT(" "));
+
 	return FString::Format(
 		TEXT(
-			"{0}: \n\t{1}\n"
-			"Size: \n\t{2} x {3}\n"
-			"Usage: \n\t{4}"),
-		{Action, Icon->FriendlyName, static_cast<int>(Icon->Size.X), static_cast<int>(Icon->Size.Y), Usage}
+			"[{0}]: {1}\n"
+			"[Size]: {2} x {3}\n"
+			"[Resource]: {5}\n"
+			"[Usage]: {4}"),
+		{
+			Action,
+			Icon->FriendlyName,
+			static_cast<int>(Icon->Size.X),
+			static_cast<int>(Icon->Size.Y),
+			Usage,
+			FPaths::ConvertRelativePathToFull(Icon->ResourceName.ToString())}
 		);
 }
 
-FReply SIconBrowserTab::OnClickIcon(FIconType InItem)
+FReply SIconBrowserTab::OnClickIcon(const FIconType& InItem)
 {
 	if (SelectedIcon == InItem)
 	{
-		SelectedIcon.Reset();
-		DetailText->SetText(FText::FromString(""));
-		return FReply::Handled();
+		return OnResetIcon();
 	}
 
 	SelectedIcon = InItem;
-	DetailText->SetText(FText::FromString(BuildDetail("Clicked", InItem)));
+	return OnSelectIcon("Clicked", InItem);
+}
+
+void SIconBrowserTab::OnHoverIcon(const FIconType& InItem)
+{
+	if (!SelectedIcon.IsValid())
+	{
+		OnSelectIcon("Hovered", InItem);
+	}
+}
+
+void SIconBrowserTab::OnUnhoverIcon(const FIconType& InItem)
+{
+	if (!SelectedIcon.IsValid())
+	{
+		OnResetIcon();
+	}
+}
+
+FReply SIconBrowserTab::OnResetIcon()
+{
+	SelectedIcon.Reset();
+
+	SelectedIconName->SetText(DefaultIconName);
+	DetailIcon->SetImage(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Default").GetIcon());
+	DetailText->SetText(DefaultDetail);
 
 	return FReply::Handled();
 }
 
-void SIconBrowserTab::OnHoverIcon(FIconType InItem)
+FReply SIconBrowserTab::OnSelectIcon(const FString& InAction, const FIconType& InIcon)
 {
-	UE_LOG(LogEditorPlusTools, Display, TEXT("Hovered: %s"), ToCStr(InItem->FriendlyName));
-	DetailText->SetText(FText::FromString(BuildDetail("Hovered", InItem)));
-}
+	SelectedIconName->SetText(FText::FromString(InIcon->SimpleName));
+	DetailIcon->SetImage(InIcon->Icon.GetIcon());
+	DetailText->SetText(FText::FromString(BuildDetail(InAction, InIcon)));
 
-void SIconBrowserTab::OnUnhoverIcon(FIconType InItem)
-{
-	UE_LOG(LogEditorPlusTools, Display, TEXT("Unhovered: %s"), ToCStr(InItem->FriendlyName));
-	if (SelectedIcon.IsValid())
-	{
-		DetailText->SetText(FText::FromString(BuildDetail("Clicked", SelectedIcon.ToSharedRef())));
-	}
-	else
-	{
-		DetailText->SetText(FText::FromString(""));
-	}
+	return FReply::Handled();
 }

@@ -4,9 +4,10 @@
 class FIconInfo
 {
 public:
-	FIconInfo(const FSlateIcon& InIcon, const FVector2f& InSize)
+	FIconInfo(const FSlateIcon& InIcon, const FSlateBrush* InBursh)
 		: Icon(InIcon)
-		, Size(InSize)
+		, ResourceName(InBursh->GetResourceName())
+		, Size(InBursh->GetImageSize())
 		, SimpleName(InIcon.GetStyleName().ToString())
 		, FriendlyName(InIcon.GetStyleSetName().ToString() + TEXT(" | ") + InIcon.GetStyleName().ToString())
 		, Usage(GetUsage())
@@ -39,6 +40,7 @@ public:
 	}
 
 	const FSlateIcon Icon;
+	const FName ResourceName;
 	const FVector2f Size;
 	const FString SimpleName;
 	const FString FriendlyName;

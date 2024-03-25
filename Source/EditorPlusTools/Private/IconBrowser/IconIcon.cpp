@@ -25,7 +25,7 @@ TSharedRef<TArray<TSharedRef<FIconInfo>>> FIconInfo::CollectIcons()
 		const FName SetName = Style.GetStyleSetName();
 		for (const auto& Elem: EditorPlus::ExposePrivate(*StyleSet))
 		{
-			Icons.Emplace(MakeShared<FIconInfo>(FSlateIcon(SetName, Elem.Key), Elem.Value->GetImageSize()));
+			Icons.Emplace(MakeShared<FIconInfo>(FSlateIcon(SetName, Elem.Key), Elem.Value));
 		}
 		return true;
 	});

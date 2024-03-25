@@ -23,9 +23,11 @@ public:
 private:
 	TSharedRef<SWidget> ConstructContent();
 	TSharedRef<ITableRow> OnIconTile(FIconType InItem, const TSharedRef<STableViewBase>& OwnerTable);
-	FReply OnClickIcon(FIconType InItem);
-	void OnHoverIcon(FIconType InItem);
-	void OnUnhoverIcon(FIconType InItem);
+	FReply OnClickIcon(const FIconType& InItem);
+	void OnHoverIcon(const FIconType& InItem);
+	void OnUnhoverIcon(const FIconType& InItem);
+	FReply OnResetIcon();
+	FReply OnSelectIcon(const FString& InAction, const FIconType& InIcon);
 
 	void OnSearchIcon(const FText& InFilterText);
 	void UpdateIconList();
@@ -35,13 +37,14 @@ private:
 	FIconListType					IconList;
 	typedef STileView<FIconType>	SIconView;
 	TSharedPtr<SIconView>			IconView;
-	TSharedPtr<FIconInfo>			SelectedIcon;
 
 	TSharedPtr<SSearchBox>			IconSearchBox;
 	TSharedPtr<FActiveTimerHandle>	IconSearchTimer;
 	const float						IconSearchDelay = 0.1f;
 
 	// usage
+	TSharedPtr<FIconInfo>			SelectedIcon;
+	TSharedPtr<SMultiLineEditableText>		SelectedIconName;
 	TSharedPtr<SMultiLineEditableText>		DetailText;
-
+	TSharedPtr<SImage>				DetailIcon;
 };
