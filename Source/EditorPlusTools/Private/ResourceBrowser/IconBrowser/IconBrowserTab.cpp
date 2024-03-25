@@ -8,7 +8,7 @@
 
 #include "WIdgets/Text/SMultiLineEditableText.h"
 
-const static FText DefaultDetail = FText::FromString("Click to Select One Icon");
+const static FString DefaultDetail("Click Icon to Select One\n[Total Num]: {0}");
 const static FText DefaultIconName = FText::FromString("No Icon is Selected");
 
 void SIconBrowserTab::Construct(const FArguments& InArgs)
@@ -126,7 +126,7 @@ TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
 						.AllowMultiLine(true)
 						.IsReadOnly(true)
 						.AllowContextMenu(true)
-						.Text(DefaultDetail)
+						.Text(FText::FromString(FString::Format(*DefaultDetail, {IconAllList.Num()})))
 					]
 				]
 			]]
@@ -308,7 +308,7 @@ FReply SIconBrowserTab::OnResetIcon()
 
 	SelectedIconName->SetText(DefaultIconName);
 	DetailIcon->SetImage(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Default").GetIcon());
-	DetailText->SetText(DefaultDetail);
+	DetailText->SetText(FText::FromString(FString::Format(*DefaultDetail, {IconAllList.Num()})));
 
 	return FReply::Handled();
 }
