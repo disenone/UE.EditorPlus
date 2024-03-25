@@ -23,3 +23,26 @@ public:
 
 	static FName GenUniqueId(const FName& Tag);
 };
+
+
+namespace EditorPlus
+{
+
+// black magic to expose private members
+// usage example:
+//		template struct EditorPlus::FExposedPrivate<&FUICommandList::UICommandBindingMap>;
+//		TMap< const TSharedPtr< const FUICommandInfo >, FUIAction >& EditorPlus::ExposePrivate(FUICommandList&);
+//		EditorPlus::ExposePrivate(FEditorPlusUtils::GetLevelEditorModule().GetGlobalLevelEditorActions().Get())
+template<auto M> struct FExposedPrivate;
+
+template<class T, class U, T U::*M>
+struct FExposedPrivate<M> {
+	friend T& ExposePrivate(U& u) {
+		return u.*M;
+	}
+	friend const T& ExposePrivate(const U& u) {
+		return u.*M;
+	}
+};
+
+}

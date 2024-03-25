@@ -1,0 +1,224 @@
+﻿
+#include "IconBrowserTab.h"
+#include "EditorPlusUtils.h"
+#include "EditorPlusToolsLog.h"
+
+#include <regex>
+#include <Widgets/Input/SSearchBox.h>
+
+#include "WIdgets/Text/SMultiLineEditableText.h"
+
+void SIconBrowserTab::Construct(const FArguments& InArgs)
+{
+	IconAllList = *FIconInfo::CollectIcons();
+
+	ChildSlot
+	[
+		ConstructContent()
+	];
+
+}
+
+TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SNew(SBorder)
+			[
+				SAssignNew(IconSearchBox, SSearchBox)
+				.OnTextChanged(this, &SIconBrowserTab::OnSearchIcon)
+			]
+		]
+		+ SVerticalBox::Slot()
+		.FillHeight(0.8f)
+		[
+			SAssignNew(IconView, SIconView)
+			.ListItemsSource(&IconAllList)
+			.OnGenerateTile(this, &SIconBrowserTab::OnIconTile)
+
+		]
+		+ SVerticalBox::Slot()
+		.FillHeight(0.2f)
+		[
+			SNew(SBorder)
+			.Padding(2.0f, 8.0f)
+			[
+				SAssignNew(DetailText, SMultiLineEditableText)
+				.AutoWrapText(true)
+				.AllowMultiLine(true)
+				.IsReadOnly(true)
+				.AllowContextMenu(true)
+			]
+		]
+	;
+}
+
+TSharedRef<ITableRow> SIconBrowserTab::OnIconTile(FIconType InItem, const TSharedRef<STableViewBase>& OwnerTable)
+{
+	return
+		SNew(STableRow< TSharedPtr<FString> >, OwnerTable)
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			[
+				SNew(SButton)
+				.VAlign(VAlign_Center)
+				.HAlign(HAlign_Center)
+				[
+					SNew(SBorder)
+					[
+						SNew(SImage)
+						.Image(InItem->Icon.GetIcon())
+						.DesiredSizeOverride(FVector2d(64, 64))
+					]
+				]
+				.OnClicked_Lambda([this, InItem]()
+				{
+					return this->OnClickIcon(InItem);
+				})
+				.OnHovered_Lambda([this, InItem]()
+				{
+					return this->OnHoverIcon(InItem);
+				})
+				.OnUnhovered_Lambda([this, InItem]()
+				{
+					return this->OnUnhoverIcon(InItem);
+				})
+			]
+			+ SVerticalBox::Slot()
+			.FillHeight(0.3)
+			[
+				SNew(SMultiLineEditableText)
+				.AutoWrapText(true)
+				.AllowMultiLine(true)
+				.IsReadOnly(true)
+				.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
+				.Text(FText::FromString(InItem->SimpleName))
+			]
+		];
+}
+
+void SIconBrowserTab::OnSearchIcon(const FText& InFilterText)
+{
+	if (IconSearchTimer.IsValid())
+	{
+		UnRegisterActiveTimer(IconSearchTimer.ToSharedRef());
+	}
+
+	IconSearchTimer = RegisterActiveTimer(IconSearchDelay, FWidgetActiveTimerDelegate::CreateLambda(
+	[self = SharedThis(this)](double, double)
+	{
+		self->IconSearchTimer.Reset();
+		self->UpdateIconList();
+		return EActiveTimerReturnType::Stop;
+	}));
+}
+
+void SIconBrowserTab::UpdateIconList()
+{
+	const FString FilterStr = IconSearchBox->GetText().ToString();
+
+	if (FilterStr.IsEmpty())
+	{
+		IconView->SetItemsSource(&IconAllList);
+	}
+	else
+	{
+		IconList.Empty();
+		IconView->SetItemsSource(&IconList);
+
+		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FEditorPlusUtils::SplitString(FilterStr, " "), TEXT(".*?")) + TEXT(")(.*)");
+		const std::wregex Pattern = std::wregex(TCHAR_TO_WCHAR(ToCStr(PatternStr)), std::regex::icase);
+		using FMatchItemType = TTuple<uint16, uint16, TSharedPtr<FIconInfo>>;
+		TArray<FMatchItemType> MatchItems;
+
+		for (TSharedRef<FIconInfo> Item: IconAllList)
+		{
+			std::wsmatch MatchResult;
+			const std::wstring SearchText(TCHAR_TO_WCHAR(ToCStr(Item->FriendlyName)));
+			if (!std::regex_match(SearchText, MatchResult, Pattern)) continue;
+
+			if (MatchResult.empty() || !MatchResult.ready()) continue;
+
+			MatchItems.Push(MakeTuple<uint16, uint16, TSharedPtr<FIconInfo>>(
+				MatchResult[1].length(), MatchResult[2].length(), Item));
+		}
+
+		if (!MatchItems.IsEmpty())
+		{
+			MatchItems.Sort([](const FMatchItemType& A, const FMatchItemType& B)
+			{
+				if (A.Get<0>() != B.Get<0>())
+				{
+					return A.Get<0>() < B.Get<0>();
+				}
+
+				if (A.Get<1>() != B.Get<1>())
+				{
+					return A.Get<1>() < B.Get<1>();
+				}
+				return *A.Get<2>() < *B.Get<2>();
+			});
+			for (FMatchItemType& MatchItem: MatchItems)
+			{
+				IconList.Push(MatchItem.Get<2>().ToSharedRef());
+			}
+		}
+
+	}
+
+	if (IconView.IsValid())
+	{
+		IconView->RebuildList();
+		IconView->RequestListRefresh();
+		IconView->ScrollToTop();
+	}
+}
+
+FString BuildDetail(const FString& Action, const SIconBrowserTab::FIconType& Icon)
+{
+	FString Usage = Icon->Usage.Replace(TEXT("\n"), TEXT("\n\t"));
+	return FString::Format(
+		TEXT(
+			"{0}: \n\t{1}\n"
+			"Size: \n\t{2} x {3}\n"
+			"Usage: \n\t{4}"),
+		{Action, Icon->FriendlyName, static_cast<int>(Icon->Size.X), static_cast<int>(Icon->Size.Y), Usage}
+		);
+}
+
+FReply SIconBrowserTab::OnClickIcon(FIconType InItem)
+{
+	if (SelectedIcon == InItem)
+	{
+		SelectedIcon.Reset();
+		DetailText->SetText(FText::FromString(""));
+		return FReply::Handled();
+	}
+
+	SelectedIcon = InItem;
+	DetailText->SetText(FText::FromString(BuildDetail("Clicked", InItem)));
+
+	return FReply::Handled();
+}
+
+void SIconBrowserTab::OnHoverIcon(FIconType InItem)
+{
+	UE_LOG(LogEditorPlusTools, Display, TEXT("Hovered: %s"), ToCStr(InItem->FriendlyName));
+	DetailText->SetText(FText::FromString(BuildDetail("Hovered", InItem)));
+}
+
+void SIconBrowserTab::OnUnhoverIcon(FIconType InItem)
+{
+	UE_LOG(LogEditorPlusTools, Display, TEXT("Unhovered: %s"), ToCStr(InItem->FriendlyName));
+	if (SelectedIcon.IsValid())
+	{
+		DetailText->SetText(FText::FromString(BuildDetail("Clicked", SelectedIcon.ToSharedRef())));
+	}
+	else
+	{
+		DetailText->SetText(FText::FromString(""));
+	}
+}

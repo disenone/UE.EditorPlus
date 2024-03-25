@@ -1,51 +1,50 @@
-﻿// Copyright (c) 2023 - 2024, Disenone (https://github.com/disenone).
-// All rights reserved. Licensed under MIT License.
-
-#include "ClassBrowser.h"
-#include "ClassBrowserTab.h"
+﻿
+#include "IconBrowser.h"
+#include "IconBrowserTab.h"
 #include "EditorPlusPath.h"
 #include "Config.h"
 
-DEFINE_LOG_CATEGORY(LogClassBrowser);
+
+DEFINE_LOG_CATEGORY(LogIconBrowser);
 #define LOCTEXT_NAMESPACE "EditorPlusTools"
 
-void FClassBrowser::OnStartup()
+void FIconBrowser::OnStartup()
 {
 	RegisterTab();
 	RegisterMenu();
 }
 
-void FClassBrowser::OnShutdown()
+void FIconBrowser::OnShutdown()
 {
 	UnregisterMenu();
 	UnregisterTab();
 }
 
-void FClassBrowser::RegisterTab()
+void FIconBrowser::RegisterTab()
 {
 	if (!Tab.IsValid())
 	{
-		Tab = MakeShared<FEditorPlusTab>(LOCTEXT("ClassBrowser", "ClassBrowser"), LOCTEXT("ClassBrowserTip", "Open the ClassBrowser"));
+		Tab = MakeShared<FEditorPlusTab>(LOCTEXT("IconBrowser", "IconBrowser"), LOCTEXT("IconBrowserTips", "Open the IconBrowser"));
 		Tab->Register(FOnSpawnTab::CreateLambda([self=SharedThis(this)](const FSpawnTabArgs& TabSpawnArgs)
 		{
 			TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
 				.TabRole(ETabRole::NomadTab)
 				.OnTabClosed(SDockTab::FOnTabClosedCallback::CreateLambda([self](TSharedRef<SDockTab>)
 				{
-					if (self->ClassBrowserTab.IsValid())
+					if (self->IconBrowserTab.IsValid())
 					{
-						self->ClassBrowserTab->OnClose();
+						self->IconBrowserTab->OnClose();
 					}
 				}))
 				[
-					SAssignNew(self->ClassBrowserTab, SClassBrowserTab)
+					SAssignNew(self->IconBrowserTab, SIconBrowserTab)
 				];
 			return SpawnedTab;
 		}));
 	}
 }
 
-void FClassBrowser::UnregisterTab()
+void FIconBrowser::UnregisterTab()
 {
 	if (Tab.IsValid())
 	{
@@ -54,24 +53,24 @@ void FClassBrowser::UnregisterTab()
 	}
 }
 
-void FClassBrowser::RegisterMenu()
+void FIconBrowser::RegisterMenu()
 {
 	if (!Menu.IsValid())
 	{
-		Menu = FEditorPlusPath::RegisterPath(EP_TOOLS_PATH "/<Section>ClassBrowser");
+		Menu = FEditorPlusPath::RegisterPath(EP_TOOLS_PATH "/<Section>IconBrowser");
 
 		FEditorPlusPath::RegisterChildPathAction(
 			Menu.ToSharedRef(),
-			"<Command>ClassBrowser",
+			"<Command>IconBrowser",
 			FExecuteAction::CreateSP(Tab.ToSharedRef(), &FEditorPlusTab::TryInvokeTab),
 			EP_FNAME_HOOK_AUTO,
-			LOCTEXT("ClassBrowser", "ClassBrowser"),
-			LOCTEXT("ClassBrowserTip", "Open the ClassBrowser")
+			LOCTEXT("IconBrowser", "IconBrowser"),
+			LOCTEXT("IconBrowserTips", "Open the IconBrowser")
 			);
 	}
 }
 
-void FClassBrowser::UnregisterMenu()
+void FIconBrowser::UnregisterMenu()
 {
 	if (Menu.IsValid())
 	{
@@ -79,5 +78,7 @@ void FClassBrowser::UnregisterMenu()
 		Menu.Reset();
 	}
 }
+
+
 
 #undef LOCTEXT_NAMESPACE

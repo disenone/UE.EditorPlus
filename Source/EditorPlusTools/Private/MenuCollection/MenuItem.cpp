@@ -2,6 +2,7 @@
 // All rights reserved. Licensed under MIT License.
 
 #include "MenuItem.h"
+#include "EditorPlusUtils.h"
 
 class FExposedGlobalTabmanager: public FGlobalTabmanager
 {
@@ -40,18 +41,8 @@ public:
 };
 
 
-template<auto M>
-struct FExposedPrivate;
-
-template<class T, class U, T U::*M>
-struct FExposedPrivate<M> {
-	friend T& ExposePrivate(U& u) {
-		return u.*M;
-	}
-};
-
-template struct FExposedPrivate<&FUICommandList::UICommandBindingMap>;
-TMap< const TSharedPtr< const FUICommandInfo >, FUIAction >& ExposePrivate(FUICommandList&);
+template struct EditorPlus::FExposedPrivate<&FUICommandList::UICommandBindingMap>;
+TMap< const TSharedPtr< const FUICommandInfo >, FUIAction >& EditorPlus::ExposePrivate(FUICommandList&);
 
 
 struct RecursiveCommandDataGetter final
@@ -59,7 +50,7 @@ struct RecursiveCommandDataGetter final
 	static TArray<TSharedPtr<IMenuItem>> CollectMenuItems()
 	{
 		TArray<TSharedPtr<IMenuItem>> Ret;
-		for (auto& Pair : ExposePrivate(FEditorPlusUtils::GetLevelEditorModule().GetGlobalLevelEditorActions().Get()))
+		for (auto& Pair : EditorPlus::ExposePrivate(FEditorPlusUtils::GetLevelEditorModule().GetGlobalLevelEditorActions().Get()))
 		{
 			auto& Key = Pair.Key;
 			auto& Value = Pair.Value;
