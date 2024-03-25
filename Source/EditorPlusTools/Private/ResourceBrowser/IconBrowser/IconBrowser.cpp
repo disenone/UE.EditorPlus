@@ -4,7 +4,6 @@
 #include "EditorPlusPath.h"
 #include "Config.h"
 
-
 DEFINE_LOG_CATEGORY(LogIconBrowser);
 #define LOCTEXT_NAMESPACE "EditorPlusTools"
 
@@ -57,11 +56,8 @@ void FIconBrowser::RegisterMenu()
 {
 	if (!Menu.IsValid())
 	{
-		Menu = FEditorPlusPath::RegisterPath(EP_TOOLS_PATH "/<Section>IconBrowser");
-
-		FEditorPlusPath::RegisterChildPathAction(
-			Menu.ToSharedRef(),
-			"<Command>IconBrowser",
+		Menu = FEditorPlusPath::RegisterPathAction(
+			EP_TOOLS_PATH "/<Section>ResourceBrowser/<Command>IconBrowser",
 			FExecuteAction::CreateSP(Tab.ToSharedRef(), &FEditorPlusTab::TryInvokeTab),
 			EP_FNAME_HOOK_AUTO,
 			LOCTEXT("IconBrowser", "IconBrowser"),
@@ -78,7 +74,5 @@ void FIconBrowser::UnregisterMenu()
 		Menu.Reset();
 	}
 }
-
-
 
 #undef LOCTEXT_NAMESPACE

@@ -5,6 +5,7 @@
 #include "LevelEditor.h"
 #include "EditorPlusMenuManager.h"
 #include "EditorPlus.h"
+#include "EditorPlusPath.h"
 #include "EditorPlusUtils.h"
 
 // ---------------------------------------------------------------------
@@ -236,6 +237,22 @@ TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuBase::CreateByPathName(const FStr
 		default:
 			return nullptr;
 	}
+}
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuBase::AddChildByPath(const FString& InPath, const TSharedPtr<FEditorPlusMenuBase>& InMenu)
+{
+	return FEditorPlusPath::RegisterChildPath(AsShared(), InPath, InMenu);
+}
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuBase::AddChildByPath(const FString& InPath, const FText& InFriendlyName, const FText& InFriendlyTips)
+{
+	return FEditorPlusPath::RegisterChildPath(AsShared(), InPath, InFriendlyName, InFriendlyTips);
+}
+
+TSharedPtr<FEditorPlusMenuBase> FEditorPlusMenuBase::AddChildActionByPath(
+	const FString& InPath, const FExecuteAction& InExecuteAction, const FName& InHook, const FText& InFriendlyName, const FText& InFriendlyTips)
+{
+	return FEditorPlusPath::RegisterChildPathAction(AsShared(), InPath, InExecuteAction, InHook, InFriendlyName, InFriendlyTips);
 }
 
 //

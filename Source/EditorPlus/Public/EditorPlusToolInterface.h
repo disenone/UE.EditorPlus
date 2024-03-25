@@ -3,19 +3,14 @@
 
 #pragma once
 
-class IEditorPlusToolInterface: public TSharedFromThis<IEditorPlusToolInterface>
-{
-public:
-	virtual ~IEditorPlusToolInterface() {}
-	virtual void OnStartup() {}
-	virtual void OnShutdown() {}
-};
-
 class IEditorPlusToolManagerInterface: public TSharedFromThis<IEditorPlusToolManagerInterface>
 {
 public:
 	virtual ~IEditorPlusToolManagerInterface() {}
-	
+
+	virtual void OnStartup() {StartupTools();}
+	virtual void OnShutdown() {ShutdownTools();}
+
 	virtual void StartupTools()
 	{
 		if (IsRunningCommandlet())
@@ -35,10 +30,13 @@ public:
 		{
 			Tool->OnShutdown();
 		}
+		Tools.Empty();
 	}
 
-	virtual void AddTools() = 0;
+	virtual void AddTools() {};
 	
 protected:
-	TArray<TSharedRef<IEditorPlusToolInterface>> Tools;
+	TArray<TSharedRef<IEditorPlusToolManagerInterface>> Tools;
 };
+
+using IEditorPlusToolInterface = IEditorPlusToolManagerInterface;

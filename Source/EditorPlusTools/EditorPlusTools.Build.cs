@@ -12,7 +12,7 @@ public class EditorPlusTools : ModuleRules
 			new string[] {
 				"EP_ENABLE_CLASS_BROWSER",
 				"EP_ENABLE_MENU_COLLECTION",
-				"EP_ENABLE_ICON_BROWSER",
+				"EP_ENABLE_RESOURCE_BROWSER",
 			}
 			);
 

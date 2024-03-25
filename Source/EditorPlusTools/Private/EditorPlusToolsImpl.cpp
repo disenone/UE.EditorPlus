@@ -6,7 +6,7 @@
 #include "MenuTest/MenuTest.h"
 #include "ClassBrowser/ClassBrowser.h"
 #include "MenuCollection/MenuCollection.h"
-#include "IconBrowser/IconBrowser.h"
+#include "ResourceBrowser/ResourceBrowser.h"
 #include "Config.h"
 
 #define LOCTEXT_NAMESPACE "EditorPlusTools"
@@ -52,8 +52,8 @@ void FEditorPlusToolsImpl::AddTools()
 		Tools.Emplace(MakeShared<FMenuCollection>());
 #endif
 
-#ifdef EP_ENABLE_ICON_BROWSER
-		Tools.Emplace(MakeShared<FIconBrowser>());
+#ifdef EP_ENABLE_RESOURCE_BROWSER
+		Tools.Emplace(MakeShared<FResourceBrowser>());
 #endif
 	}
 

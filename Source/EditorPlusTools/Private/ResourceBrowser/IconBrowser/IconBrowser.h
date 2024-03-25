@@ -14,7 +14,6 @@ public:
 	virtual void OnStartup() override;
 	virtual void OnShutdown() override;
 
-
 private:
 	void RegisterTab();
 	void UnregisterTab();

@@ -100,7 +100,13 @@ public:
 		}
 		return true;
 	}
-	
+
+	virtual TSharedPtr<FEditorPlusMenuBase> AddChildByPath(const FString& InPath, const TSharedPtr<FEditorPlusMenuBase>& InMenu=nullptr);
+	virtual TSharedPtr<FEditorPlusMenuBase> AddChildByPath(const FString& InPath, const FText& InFriendlyName, const FText& InFriendlyTips);
+	virtual TSharedPtr<FEditorPlusMenuBase> AddChildActionByPath(
+		const FString& InPath, const FExecuteAction& InExecuteAction, const FName& InHook=EP_FNAME_HOOK_AUTO,
+		const FText& InFriendlyName=FText::GetEmpty(), const FText& InFriendlyTips=FText::GetEmpty());
+
 	virtual bool RemoveChild(const TSharedRef<FEditorPlusMenuBase>& Child) { return Children.Remove(Child) > 0; }
 	virtual bool RemoveChildByPathName(const FString& PathName)
 	{
