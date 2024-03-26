@@ -8,6 +8,7 @@
 
 const static FString DefaultFontDetail("Click Font to Select One\n[Total Num]: {0}");
 const static FText DefaultFontName = FText::FromString("No Font is Selected");
+const static FText DefaultFontDemonstrate = FText::FromString("Sample text, you can modify this to anything you want.");
 
 void SFontBrowserTab::Construct(const FArguments& InArgs)
 {
@@ -124,8 +125,9 @@ TSharedRef<SWidget> SFontBrowserTab::ConstructContent()
 				// detail text
 				+ SHorizontalBox::Slot()
 				[
-					SNew(SBox)
-					.Padding(2.0f, 8.0f)
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot()
+					.FillHeight(0.5f)
 					[
 						SAssignNew(DetailText, SMultiLineEditableText)
 						.AutoWrapText(true)
@@ -133,6 +135,24 @@ TSharedRef<SWidget> SFontBrowserTab::ConstructContent()
 						.IsReadOnly(true)
 						.AllowContextMenu(true)
 						.Text(FText::FromString(FString::Format(*DefaultFontDetail, {FontAllList.Num()})))
+					]
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(SBox)
+						.WidthOverride(3.0f)
+						[SNew(SSeparator).SeparatorImage(FCoreStyle::Get().GetBrush( "Border" ))]
+					]
+					+ SVerticalBox::Slot()
+					.FillHeight(0.5f)
+					[
+						SAssignNew(DemonstrateText, SMultiLineEditableText)
+						.AutoWrapText(true)
+						.AllowMultiLine(true)
+						.IsReadOnly(false)
+						.AllowContextMenu(true)
+						.Text(DefaultFontDemonstrate)
+						.OnTextChanged(this, &SFontBrowserTab::OnDemonstrateChange)
 					]
 				]
 			]]
@@ -320,6 +340,8 @@ FReply SFontBrowserTab::OnResetFont()
 	SelectedFontName->SetText(DefaultFontName);
 	DetailFont->SetText(FText::FromString(""));
 	DetailText->SetText(FText::FromString(FString::Format(*DefaultFontDetail, {FontAllList.Num()})));
+	DemonstrateText->SetFont(DetailFont->GetFont());
+	DemonstrateText->SetText(DemonstrateContent.IsEmpty() ? DefaultFontDemonstrate : DemonstrateContent);
 
 	return FReply::Handled();
 }
@@ -330,7 +352,13 @@ FReply SFontBrowserTab::OnSelectFont(const FString& InAction, const FFontType& I
 	DetailFont->SetText(FText::FromName(InFont->TypefaceFontName));
 	DetailFont->SetFont(InFont->Font);
 	DetailText->SetText(FText::FromString(BuildDetail(InAction, InFont)));
-	// DetailText->SetFont(InFont->Font);
+	DemonstrateText->SetFont(InFont->Font);
+	DemonstrateText->SetText(DemonstrateContent.IsEmpty() ? DefaultFontDemonstrate : DemonstrateContent);
 
 	return FReply::Handled();
+}
+
+void SFontBrowserTab::OnDemonstrateChange(const FText& InText)
+{
+	DemonstrateContent = InText;
 }

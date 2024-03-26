@@ -72,7 +72,7 @@ public:
 
 	bool operator< (const FFontInfo& Other) const
 	{
-		return FriendlyName < Other.FriendlyName;
+		return SimpleName < Other.SimpleName;
 	}
 
 	const EFontInfoType Type;

@@ -28,6 +28,7 @@ private:
 	void OnUnhoverFont(const FFontType& InItem);
 	FReply OnResetFont();
 	FReply OnSelectFont(const FString& InAction, const FFontType& InFont);
+	void OnDemonstrateChange(const FText& InText);
 
 	void OnSearchFont(const FText& InFilterText);
 	void UpdateFontList();
@@ -47,4 +48,6 @@ private:
 	TSharedPtr<SMultiLineEditableText>		SelectedFontName;
 	TSharedPtr<SMultiLineEditableText>		DetailText;
 	TSharedPtr<SMultiLineEditableText>		DetailFont;
+	TSharedPtr<SMultiLineEditableText>		DemonstrateText;
+	FText									DemonstrateContent;
 };
