@@ -1,17 +1,18 @@
 ﻿
 #pragma once
 
-enum class EColorInfoType: uint8
-{
-	SlateColor,
-	SlateLinearColor,
-	LinearColor,
-	Color,
-};
 
 class FColorInfo
 {
 public:
+	enum class EColorInfoType: uint8
+	{
+		SlateColor,
+		SlateLinearColor,
+		LinearColor,
+		Color,
+	};
+
 	FColorInfo(const EColorInfoType InType, const FSlateColor& InColor, const FName& InColorName=NAME_None, const FName& InStyleSetName=NAME_None)
 		: Type(InType)
 		, Color(InColor)
@@ -54,18 +55,27 @@ public:
 
 	FString GetUsage() const
 	{
+		FString GetStyle;
+		if (Type == EColorInfoType::SlateColor || Type == EColorInfoType::SlateLinearColor)
+		{
+			if (StyleSetName == FAppStyle::GetAppStyleSetName())
+				GetStyle = TEXT("FAppStyle::Get().");
+			else
+				GetStyle = FString::Format(TEXT("FSlateStyleRegistry::FindSlateStyle(\"{0}\")->"), {StyleSetName.ToString()});
+		}
+
 		switch (Type)
 		{
 		case EColorInfoType::SlateColor:
 			return FString::Format(
-				TEXT("FSlateStyleRegistry::FindSlateStyle(\"{0}\")->GetSlateColor(\"{1}\");"),
-				{StyleSetName.ToString(), SimpleName}
+				TEXT("{0}GetSlateColor(\"{1}\");"),
+				{GetStyle, SimpleName}
 				);
 
 		case EColorInfoType::SlateLinearColor:
 			return FString::Format(
-				TEXT("FSlateStyleRegistry::FindSlateStyle(\"{0}\")->GetColor(\"{1}\");"),
-				{StyleSetName.ToString(), SimpleName}
+				TEXT("{0}->GetColor(\"{1}\");"),
+				{GetStyle, SimpleName}
 				);
 
 		case EColorInfoType::LinearColor:
