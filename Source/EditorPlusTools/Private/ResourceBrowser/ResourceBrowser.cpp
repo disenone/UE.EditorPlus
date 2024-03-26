@@ -6,6 +6,7 @@
 #include "IconBrowser/IconBrowser.h"
 #include "ColorBrowser/ColorBrowser.h"
 #include "FontBrowser/FontBrowser.h"
+#include "SoundBrowser/SoundBrowser.h"
 
 #define LOCTEXT_NAMESPACE "EditorPlusTools"
 
@@ -45,6 +46,7 @@ void FResourceBrowser::AddTools()
 	Tools.Emplace(MakeShared<FIconBrowser>());
 	Tools.Emplace(MakeShared<FColorBrowser>());
 	Tools.Emplace(MakeShared<FFontBrowser>());
+	Tools.Emplace(MakeShared<FSoundBrowser>());
 }
 
 
