@@ -6,7 +6,7 @@
 
 #include "Styling/StarshipCoreStyle.h"
 
-// exposed Colors
+// exposed Fonts
 using FExposedFontsType = TMap<FName, FSlateFontInfo>;
 EP_EXPOSE_PRIVATE(ExposedFonts, FSlateStyleSet, FExposedFontsType, FontInfoResources);
 
