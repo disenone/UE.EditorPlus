@@ -9,21 +9,20 @@ public:
 
 	enum class EWidgetStyleType
 	{
-		Unknown,
 		Button,
-		CheckBox,
 		TextBlock,
-		ComboButton,
-		ComboBox,
-		Hyperlink,
 		EditableText,
-		ScrollBar,
 		EditableTextBox,
 		InlineEditableTextBlock,
-		ProgressBar,
-		ExpandableArea,
+		ScrollBar,
+		CheckBox,
+		ComboButton,
+		ComboBox,
 		SearchBox,
 		Slider,
+		ProgressBar,
+		Hyperlink,
+		ExpandableArea,
 		VolumeControl,
 		InlineTextImage,
 		SpinBox,
@@ -37,6 +36,7 @@ public:
 		ScrollBorder,
 		Window,
 		StyleNum,
+		Unknown,
 	};
 
 	explicit FWidgetStyleInfo(const TSharedRef<FSlateWidgetStyle>& InWidgetStyle, const FName& InWidgetStyleName=NAME_None, const FName& InStyleSetName=NAME_None)
@@ -70,8 +70,8 @@ public:
 
 	bool operator< (const FWidgetStyleInfo& Other) const
 	{
-		if (WidgetTypeName != Other.WidgetTypeName)
-			return WidgetTypeName.ToString() < Other.WidgetTypeName.ToString();
+		if (Type != Other.Type)
+			return Type < Other.Type;
 
 		return SimpleName < Other.SimpleName;
 	}

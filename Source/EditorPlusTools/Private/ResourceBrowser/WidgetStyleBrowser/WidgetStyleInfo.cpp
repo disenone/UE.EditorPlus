@@ -80,7 +80,7 @@ FWidgetStyleInfo::EWidgetStyleType FWidgetStyleInfo::GetType() const
 		EP_DECLARE_STYLE_ELEM(ScrollBorder),
 		EP_DECLARE_STYLE_ELEM(Window),
 	};
-	checkf(TypeMap.Num() == static_cast<uint8>(EWidgetStyleType::StyleNum) - 1, TEXT("some style is missing."));
+	checkf(TypeMap.Num() == static_cast<uint8>(EWidgetStyleType::StyleNum), TEXT("some style is missing."));
 #undef EP_DECLARE_STYLE_ELEM
 
 	if (const auto Iter = TypeMap.Find(WidgetTypeName)) return *Iter;
@@ -111,7 +111,7 @@ TSharedRef<SWidget> FWidgetStyleInfo::GetSampleWidget() const
 		return SNew(SComboBox<TSharedRef<uint32>>).ComboBoxStyle(GetStyle<FComboBoxStyle>());
 
 	case EWidgetStyleType::Hyperlink:
-		return SNew(SHyperlink).Style(GetStyle<FHyperlinkStyle>());
+		return SNew(SHyperlink).Style(GetStyle<FHyperlinkStyle>()).Text(FText::FromString(TEXT("Link")));
 
 	case EWidgetStyleType::EditableText:
 		return SNew(SEditableText).Style(GetStyle<FEditableTextStyle>()).Text(FText::FromString(TEXT("EditableText")));
