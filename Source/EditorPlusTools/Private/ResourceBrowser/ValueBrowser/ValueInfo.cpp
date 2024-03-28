@@ -11,7 +11,7 @@ using FExposedFloatsType = TMap<FName, float>;
 EP_EXPOSE_PRIVATE(ExposedFloats, FSlateStyleSet, FExposedFloatsType, FloatValues);
 
 // exposed FVector2Ds
-using FExposedFVector2DsType = TMap<FName, FVector2f>;
+using FExposedFVector2DsType = TMap<FName, FExposedFVector2DType>;
 EP_EXPOSE_PRIVATE(ExposedFVector2Ds, FSlateStyleSet, FExposedFVector2DsType, Vector2DValues);
 
 

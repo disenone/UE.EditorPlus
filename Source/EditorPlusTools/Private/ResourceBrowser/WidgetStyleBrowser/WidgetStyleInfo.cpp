@@ -127,8 +127,10 @@ TSharedRef<SWidget> FWidgetStyleInfo::GetSampleWidget() const
 	case EWidgetStyleType::ProgressBar:
 		return SNew(SProgressBar).Style(GetStyle<FProgressBarStyle>());
 
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 3
 	case EWidgetStyleType::ExpandableArea:
 		return SNew(SExpandableArea).Style(GetStyle<FExpandableAreaStyle>());
+#endif
 
 	case EWidgetStyleType::SearchBox:
 		return SNew(SSearchBox).Style(GetStyle<FSearchBoxStyle>());

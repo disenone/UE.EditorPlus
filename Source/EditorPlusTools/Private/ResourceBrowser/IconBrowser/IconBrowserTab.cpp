@@ -14,7 +14,7 @@ const static FSlateIcon DefaultIcon(FAppStyle::GetAppStyleSetName(), "Default");
 
 void SIconBrowserTab::Construct(const FArguments& InArgs)
 {
-	IconAllList = *FIconInfo::CollectIcons();
+	IconList = IconAllList = *FIconInfo::CollectIcons();
 
 	ChildSlot
 	[
@@ -41,7 +41,7 @@ TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
 		.FillHeight(0.8f)
 		[
 			SAssignNew(IconView, SIconView)
-			.ListItemsSource(&IconAllList)
+			.ListItemsSource(&IconList)
 			.OnGenerateTile(this, &SIconBrowserTab::OnIconTile)
 
 		]
@@ -113,7 +113,7 @@ TSharedRef<SWidget> SIconBrowserTab::ConstructContent()
 				[
 					SNew(SBox)
 					.WidthOverride(3.0f)
-					[SNew(SSeparator).SeparatorImage(FCoreStyle::Get().GetBrush( "Border" ))]
+					[SNew(SBorder)]
 				]
 
 				// detail text
@@ -202,12 +202,12 @@ void SIconBrowserTab::UpdateIconList()
 
 	if (FilterStr.IsEmpty())
 	{
-		IconView->SetItemsSource(&IconAllList);
+		if (IconList.Num() != IconAllList.Num())
+			IconList = IconAllList;
 	}
 	else
 	{
 		IconList.Empty();
-		IconView->SetItemsSource(&IconList);
 
 		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FEditorPlusUtils::SplitString(FilterStr, " "), TEXT(".*?")) + TEXT(")(.*)");
 		const std::wregex Pattern = std::wregex(TCHAR_TO_WCHAR(ToCStr(PatternStr)), std::regex::icase);

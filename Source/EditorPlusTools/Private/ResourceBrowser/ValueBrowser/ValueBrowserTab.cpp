@@ -11,7 +11,7 @@ const static FText DefaultValueName = FText::FromString("No Value is Selected");
 
 void SValueBrowserTab::Construct(const FArguments& InArgs)
 {
-	ValueAllList = *FValueInfo::CollectValues();
+	ValueList = ValueAllList = *FValueInfo::CollectValues();
 
 	ChildSlot
 	[
@@ -38,7 +38,7 @@ TSharedRef<SWidget> SValueBrowserTab::ConstructContent()
 		.FillHeight(0.8f)
 		[
 			SAssignNew(ValueView, SValueView)
-			.ListItemsSource(&ValueAllList)
+			.ListItemsSource(&ValueList)
 			.OnGenerateTile(this, &SValueBrowserTab::OnValueTile)
 
 		]
@@ -118,7 +118,7 @@ TSharedRef<SWidget> SValueBrowserTab::ConstructContent()
 				[
 					SNew(SBox)
 					.WidthOverride(3.0f)
-					[SNew(SSeparator).SeparatorImage(FCoreStyle::Get().GetBrush( "Border" ))]
+					[SNew(SBorder)]
 				]
 
 				// detail text
@@ -214,12 +214,12 @@ void SValueBrowserTab::UpdateValueList()
 
 	if (FilterStr.IsEmpty())
 	{
-		ValueView->SetItemsSource(&ValueAllList);
+		if (ValueList.Num() != ValueAllList.Num())
+			ValueList = ValueAllList;
 	}
 	else
 	{
 		ValueList.Empty();
-		ValueView->SetItemsSource(&ValueList);
 
 		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FEditorPlusUtils::SplitString(FilterStr, " "), TEXT(".*?")) + TEXT(")(.*)");
 		const std::wregex Pattern = std::wregex(TCHAR_TO_WCHAR(ToCStr(PatternStr)), std::regex::icase);

@@ -13,7 +13,7 @@ const static FText DefaultWidgetStyleName = FText::FromString("No WidgetStyle is
 
 void SWidgetStyleBrowserTab::Construct(const FArguments& InArgs)
 {
-	WidgetStyleAllList = *FWidgetStyleInfo::CollectWidgetStyles();
+	WidgetStyleList = WidgetStyleAllList = *FWidgetStyleInfo::CollectWidgetStyles();
 
 	ChildSlot
 	[
@@ -40,7 +40,7 @@ TSharedRef<SWidget> SWidgetStyleBrowserTab::ConstructContent()
 		.FillHeight(0.8f)
 		[
 			SAssignNew(WidgetStyleView, SWidgetStyleView)
-			.ListItemsSource(&WidgetStyleAllList)
+			.ListItemsSource(&WidgetStyleList)
 			.OnGenerateTile(this, &SWidgetStyleBrowserTab::OnWidgetStyleTile)
 
 		]
@@ -120,7 +120,7 @@ TSharedRef<SWidget> SWidgetStyleBrowserTab::ConstructContent()
 				[
 					SNew(SBox)
 					.WidthOverride(3.0f)
-					[SNew(SSeparator).SeparatorImage(FCoreStyle::Get().GetBrush( "Border" ))]
+					[SNew(SBorder)]
 				]
 
 				// detail text
@@ -215,12 +215,12 @@ void SWidgetStyleBrowserTab::UpdateWidgetStyleList()
 
 	if (FilterStr.IsEmpty())
 	{
-		WidgetStyleView->SetItemsSource(&WidgetStyleAllList);
+		if (WidgetStyleList.Num() != WidgetStyleAllList.Num())
+			WidgetStyleList = WidgetStyleAllList;
 	}
 	else
 	{
 		WidgetStyleList.Empty();
-		WidgetStyleView->SetItemsSource(&WidgetStyleList);
 
 		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FEditorPlusUtils::SplitString(FilterStr, " "), TEXT(".*?")) + TEXT(")(.*)");
 		const std::wregex Pattern = std::wregex(TCHAR_TO_WCHAR(ToCStr(PatternStr)), std::regex::icase);

@@ -1,6 +1,12 @@
 ﻿
 #pragma once
 
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION > 1
+	using FExposedFVector2DType = FVector2f;
+#else
+	using FExposedFVector2DType = FVector2D;
+#endif
+
 class FValueInfo
 {
 public:
@@ -13,10 +19,10 @@ public:
 	union FValue
 	{
 		FValue(float InValue) { FloatValue = InValue; }
-		FValue(const FVector2f& InValue) { Vector2DValue = InValue; }
+		FValue(const FExposedFVector2DType& InValue) { Vector2DValue = InValue; }
 
 		float FloatValue;
-		FVector2f Vector2DValue;
+		FExposedFVector2DType Vector2DValue;
 	};
 
 	FValueInfo(const EValueInfoType InType, const FValue& InValue, const FName& InValueName=NAME_None, const FName& InStyleSetName=NAME_None)

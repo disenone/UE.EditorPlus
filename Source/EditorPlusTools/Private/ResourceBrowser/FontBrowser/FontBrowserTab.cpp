@@ -12,7 +12,7 @@ const static FText DefaultFontDemonstrate = FText::FromString("Sample text, you 
 
 void SFontBrowserTab::Construct(const FArguments& InArgs)
 {
-	FontAllList = *FFontInfo::CollectFonts();
+	FontList = FontAllList = *FFontInfo::CollectFonts();
 
 	ChildSlot
 	[
@@ -39,7 +39,7 @@ TSharedRef<SWidget> SFontBrowserTab::ConstructContent()
 		.FillHeight(0.8f)
 		[
 			SAssignNew(FontView, SFontView)
-			.ListItemsSource(&FontAllList)
+			.ListItemsSource(&FontList)
 			.OnGenerateTile(this, &SFontBrowserTab::OnFontTile)
 
 		]
@@ -119,7 +119,7 @@ TSharedRef<SWidget> SFontBrowserTab::ConstructContent()
 				[
 					SNew(SBox)
 					.WidthOverride(3.0f)
-					[SNew(SSeparator).SeparatorImage(FCoreStyle::Get().GetBrush( "Border" ))]
+					[SNew(SBorder)]
 				]
 
 				// detail text
@@ -141,7 +141,7 @@ TSharedRef<SWidget> SFontBrowserTab::ConstructContent()
 					[
 						SNew(SBox)
 						.WidthOverride(3.0f)
-						[SNew(SSeparator).SeparatorImage(FCoreStyle::Get().GetBrush( "Border" ))]
+						[SNew(SBorder)]
 					]
 					+ SVerticalBox::Slot()
 					.FillHeight(0.5f)
@@ -234,12 +234,12 @@ void SFontBrowserTab::UpdateFontList()
 
 	if (FilterStr.IsEmpty())
 	{
-		FontView->SetItemsSource(&FontAllList);
+		if (FontList.Num() != FontAllList.Num())
+			FontList = FontAllList;
 	}
 	else
 	{
 		FontList.Empty();
-		FontView->SetItemsSource(&FontList);
 
 		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FEditorPlusUtils::SplitString(FilterStr, " "), TEXT(".*?")) + TEXT(")(.*)");
 		const std::wregex Pattern = std::wregex(TCHAR_TO_WCHAR(ToCStr(PatternStr)), std::regex::icase);

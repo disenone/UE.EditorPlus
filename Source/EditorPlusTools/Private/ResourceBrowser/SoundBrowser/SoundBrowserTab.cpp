@@ -13,7 +13,7 @@ const static FText DefaultSoundName = FText::FromString("No Sound is Selected");
 
 void SSoundBrowserTab::Construct(const FArguments& InArgs)
 {
-	SoundAllList = *FSoundInfo::CollectSounds();
+	SoundList = SoundAllList = *FSoundInfo::CollectSounds();
 
 	ChildSlot
 	[
@@ -40,7 +40,7 @@ TSharedRef<SWidget> SSoundBrowserTab::ConstructContent()
 		.FillHeight(0.8f)
 		[
 			SAssignNew(SoundView, SSoundView)
-			.ListItemsSource(&SoundAllList)
+			.ListItemsSource(&SoundList)
 			.OnGenerateTile(this, &SSoundBrowserTab::OnSoundTile)
 
 		]
@@ -119,7 +119,7 @@ TSharedRef<SWidget> SSoundBrowserTab::ConstructContent()
 				[
 					SNew(SBox)
 					.WidthOverride(3.0f)
-					[SNew(SSeparator).SeparatorImage(FCoreStyle::Get().GetBrush( "Border" ))]
+					[SNew(SBorder)]
 				]
 
 				// detail text
@@ -216,12 +216,12 @@ void SSoundBrowserTab::UpdateSoundList()
 
 	if (FilterStr.IsEmpty())
 	{
-		SoundView->SetItemsSource(&SoundAllList);
+		if (SoundList.Num() != SoundAllList.Num())
+			SoundList = SoundAllList;
 	}
 	else
 	{
 		SoundList.Empty();
-		SoundView->SetItemsSource(&SoundList);
 
 		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FEditorPlusUtils::SplitString(FilterStr, " "), TEXT(".*?")) + TEXT(")(.*)");
 		const std::wregex Pattern = std::wregex(TCHAR_TO_WCHAR(ToCStr(PatternStr)), std::regex::icase);

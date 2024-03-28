@@ -12,7 +12,7 @@ const static FText DefaultColorName = FText::FromString("No Color is Selected");
 
 void SColorBrowserTab::Construct(const FArguments& InArgs)
 {
-	ColorAllList = *FColorInfo::CollectColors();
+	ColorList = ColorAllList = *FColorInfo::CollectColors();
 
 	ChildSlot
 	[
@@ -39,9 +39,8 @@ TSharedRef<SWidget> SColorBrowserTab::ConstructContent()
 		.FillHeight(0.8f)
 		[
 			SAssignNew(ColorView, SColorView)
-			.ListItemsSource(&ColorAllList)
+			.ListItemsSource(&ColorList)
 			.OnGenerateTile(this, &SColorBrowserTab::OnColorTile)
-
 		]
 		// detail
 		+ SVerticalBox::Slot()
@@ -111,7 +110,7 @@ TSharedRef<SWidget> SColorBrowserTab::ConstructContent()
 				[
 					SNew(SBox)
 					.WidthOverride(3.0f)
-					[SNew(SSeparator).SeparatorImage(FCoreStyle::Get().GetBrush( "Border" ))]
+					[SNew(SBorder)]
 				]
 
 				// detail text
@@ -201,12 +200,12 @@ void SColorBrowserTab::UpdateColorList()
 
 	if (FilterStr.IsEmpty())
 	{
-		ColorView->SetItemsSource(&ColorAllList);
+		if (ColorList.Num() != ColorAllList.Num())
+			ColorList = ColorAllList;
 	}
 	else
 	{
 		ColorList.Empty();
-		ColorView->SetItemsSource(&ColorList);
 
 		const FString PatternStr = TEXT("(.*?)(") + FString::Join(FEditorPlusUtils::SplitString(FilterStr, " "), TEXT(".*?")) + TEXT(")(.*)");
 		const std::wregex Pattern = std::wregex(TCHAR_TO_WCHAR(ToCStr(PatternStr)), std::regex::icase);
