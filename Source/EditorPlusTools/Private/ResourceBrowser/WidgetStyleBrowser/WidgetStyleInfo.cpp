@@ -11,8 +11,7 @@
 #include <Widgets/Input/SVolumeControl.h>
 #include <Widgets/Input/SSpinBox.h>
 #include <Widgets/Views/SHeaderRow.h>
-
-#include "Widgets/Layout/SScrollBorder.h"
+#include <Widgets/Layout/SScrollBorder.h>
 
 
 // exposed WidgetStyles
