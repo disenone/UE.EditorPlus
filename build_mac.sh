@@ -4,7 +4,7 @@ set -x
 CWD=$(cd $(dirname $0);pwd)
 ENGINE=/Volumes/SSD/UE/Engines/UE_
 OUTPUT=/Volumes/SSD/UE/projects/products
-VERS=(5.0 5.1 5.2 5.3)
+VERS=(5.1 5.2 5.3)
 ZIP=zip
 
 help(){
