@@ -13,6 +13,7 @@ public class EditorPlusTools : ModuleRules
 				"EP_ENABLE_CLASS_BROWSER",
 				"EP_ENABLE_MENU_COLLECTION",
 				"EP_ENABLE_RESOURCE_BROWSER",
+				"EP_ENABLE_RESOURCE_BROWSER_ALL_IN_ONE",
 			}
 			);
 
