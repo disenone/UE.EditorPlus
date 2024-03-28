@@ -340,7 +340,7 @@ FReply SFontBrowserTab::OnResetFont()
 	SelectedFontName->SetText(DefaultFontName);
 	DetailFont->SetText(FText::FromString(""));
 	DetailText->SetText(FText::FromString(FString::Format(*DefaultFontDetail, {FontAllList.Num()})));
-	DemonstrateText->SetFont(DetailFont->GetFont());
+	DemonstrateText->SetFont(FAppStyle::Get().GetFontStyle("NormalFont"));
 	DemonstrateText->SetText(DemonstrateContent.IsEmpty() ? DefaultFontDemonstrate : DemonstrateContent);
 
 	return FReply::Handled();
