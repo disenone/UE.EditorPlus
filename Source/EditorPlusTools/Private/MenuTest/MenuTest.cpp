@@ -68,8 +68,8 @@ TSharedPtr<FEditorPlusMenuBase> FMenuTest::RegisterPath(const FString& Path, con
 		ShouldSuccess == Ret.IsValid(),
 		TEXT("RegisterPath [%s] should be [%s], got [%s]"),
 		ToCStr(Path),
-		ShouldSuccess? "Success" : "Failed",
-		Ret.IsValid() ? "Success" : "Failed");
+		ShouldSuccess? TEXT("Success") : TEXT("Failed"),
+		Ret.IsValid() ? TEXT("Success") : TEXT("Failed"));
 	if(Ret.IsValid()) Menus.Push(Ret);
 	return Ret;
 }

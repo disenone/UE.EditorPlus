@@ -3,7 +3,7 @@ echo off
 set CWD=%~dp0
 set ENGINE=e:\UE\Epic Games\UE_
 set OUTPUT=e:\UE\projects\products
-set VERS=5.1 5.2 5.3
+set VERS=5.1 5.2 5.3 5.4
 set ZIP="D:\Program Files\7-Zip\7z.exe"
 
 set ARG=%1
@@ -46,6 +46,6 @@ goto :exit
 goto :eof
 
 :help
-    echo "Usage: build_win.bat [all|5.0|5.1|5.2|5.3]"
+    echo "Usage: build_win.bat [all|5.0|5.1|5.2|5.3|5.4]"
 
 :exit
